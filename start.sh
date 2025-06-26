@@ -48,7 +48,7 @@ cd "$PACKAGE_DIR"
 wget "$PACKAGE_URL" -O "$PACKAGE_NAME"
 
 echo "[STEP] Installing PyRosetta into BindCraft environment (offline)..."
-mamba install --offline "$PACKAGE_NAME" --use-local
+mamba install --offline "$PACKAGE_NAME"
 if [ $? -ne 0 ]; then
   echo "[ERROR] Failed to install PyRosetta"
   exit 1
