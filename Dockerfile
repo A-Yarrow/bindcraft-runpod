@@ -28,9 +28,6 @@ WORKDIR /app/bindcraft
 RUN chmod +x install_bindcraft.sh && \
     bash install_bindcraft.sh --cuda '12.4' --pkg_manager 'mamba'
 
-# Create the shared param directory mount point (empty)
-RUN mkdir -p /app/bindcraft/params
-
 # Copy startup script and notebook
 COPY start.sh /app/start.sh
 COPY bindcraft-runpod-start.ipynb /app/bindcraft-runpod-start.ipynb
@@ -40,4 +37,5 @@ RUN chmod +x /app/start.sh
 EXPOSE 8888
 
 # Default command
-CMD ["/app/start.sh"]
+#CMD ["/app/start.sh"] uncomment for production
+CMD ["/bin/bash"]
