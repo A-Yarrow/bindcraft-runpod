@@ -37,5 +37,6 @@ RUN chmod +x /app/start.sh
 EXPOSE 8888
 
 # Default command
-CMD ["/app/start.sh"] uncomment for production
-#CMD ["/bin/bash"] uncomment for debugging
+# Uncomment the follwoing line for production and comment out last line
+# CMD ["/app/start.sh"] uncomment for production
+CMD ["/bin/bash", "-c", "while true; do sleep 3600; done"] # Keep container running for testing
