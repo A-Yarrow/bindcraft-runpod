@@ -37,5 +37,5 @@ RUN chmod +x /app/start.sh
 EXPOSE 8888
 
 # Default command
-#CMD ["/app/start.sh"] uncomment for production
-CMD ["/bin/bash"]
+CMD ["/app/start.sh"] uncomment for production
+#CMD ["/bin/bash"] uncomment for debugging
