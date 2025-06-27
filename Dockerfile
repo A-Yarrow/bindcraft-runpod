@@ -37,6 +37,8 @@ RUN chmod +x /app/start.sh
 EXPOSE 8888
 
 # Default command
-# Uncomment the follwoing line for production and comment out last line
-# CMD ["/app/start.sh"] uncomment for production
-CMD ["/bin/bash", "-c", "while true; do sleep 3600; done"] # Keep container running for testing
+
+CMD ["/app/start.sh"] 
+# For development, launch Jupyter notebook
+#EXPOSE 8888
+#CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--NotebookApp.token=", "--NotebookApp.password="]
