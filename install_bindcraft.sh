@@ -62,23 +62,31 @@ source ${CONDA_BASE}/bin/activate ${CONDA_BASE}/envs/BindCraft || { echo -e "Err
 echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 
 # install required conda packages
-echo -e "Instaling conda requirements\n"
+echo -e "Installing conda requirements\n"
 if [ -n "$cuda" ]; then
     CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
   pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
-  libgfortran5 tqdm jupyter ffmpeg fsspec py3dmol chex dm-haiku \
+  libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
   flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax \
   jaxlib=*=*cuda* jax cuda-nvcc cudnn \
   -c conda-forge -c nvidia || \
   { echo -e "Error: Failed to install conda packages."; exit 1; }
 
 else
-    $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg fsspec py3dmol chex dm-haiku flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn -c conda-forge -c nvidia -y || { echo -e "Error: Failed to install conda packages."; exit 1; }
-
+    $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
+    libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
+    flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax \
+    jaxlib jax cuda-nvcc cudnn \
+    -c conda-forge -c nvidia -y || \
+    { echo -e "Error: Failed to install conda packages."; exit 1; }
 fi
 
 # make sure all required packages were installed
-required_packages=(pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm jupyter ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn)
+required_packages=(
+  pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
+  jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
+  ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn
+)
 missing_packages=()
 
 # Check each package
