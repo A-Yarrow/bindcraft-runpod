@@ -14,10 +14,15 @@ source /opt/conda/etc/profile.d/conda.sh
 conda activate BindCraft || {
   echo "[FAIL] Failed to activate Conda environment" | tee -a "$STATUS_FILE"
 }
-
 # Create required workspace directories
 echo "[STEP] Creating persistent /workspace directories if they don't exist..."
-mkdir -p /workspace/{settings_target,settings_filters,settings_advanced, outputs/PDL1, inputs, params}
+mkdir -p \
+  /workspace/settings_target \
+  /workspace/settings_filters \
+  /workspace/settings_advanced \
+  /workspace/outputs/PDL1 \
+  /workspace/inputs \
+  /workspace/params
 
 # Copy default configs if missing
 for d in settings_target settings_filters settings_advanced inputs; do
@@ -33,14 +38,13 @@ done
 
 # Download and install PyRosetta (offline)
 PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
-PACKAGE_NAME="pyrosetta.tar.bz2"
 PACKAGE_DIR="/tmp/pyrosetta"
 ENV_PATH="/opt/conda/envs/BindCraft"
 
 echo "[STEP] Downloading PyRosetta package..."
 mkdir -p "$PACKAGE_DIR"
 cd "$PACKAGE_DIR"
-wget "$PACKAGE_URL" -O "$PACKAGE_NAME" || {
+wget "$PACKAGE_URL" || {
   echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
 }
 
@@ -53,9 +57,9 @@ rm -rf "$PACKAGE_DIR"
 # Download AlphaFold2 weights if missing
 WEIGHTS_DIR="/workspace/params"
 WEIGHTS_FILE="${WEIGHTS_DIR}/params_model_5_ptm.npz"
-if [ ! -f "$WEIGHTS_FILE" ]; then
-  echo "[STEP] Downloading AlphaFold2 weights to $WEIGHTS_DIR..."
-  cd "$WEIGHTS_DIR"
+if [ ! -f "${WEIGHTS_FILE}" ]; then
+  echo "[STEP] Downloading AlphaFold2 weights to ${WEIGHTS_DIR}..."
+  cd "${WEIGHTS_DIR}"
   wget https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
     echo "[FAIL] Failed to download AlphaFold2 weights" | tee -a "$STATUS_FILE"
   }

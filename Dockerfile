@@ -22,8 +22,9 @@ RUN conda install -y -n base -c conda-forge mamba && \
 
 # Clone BindCraft repository
 RUN git clone https://github.com/A-Yarrow/bindcraft-runpod.git /app/bindcraft
-WORKDIR /app/bindcraft
 
+COPY install_bindcraft.sh /app/bindcraft/install_bindcraft.sh
+WORKDIR /app/bindcraft
 # Install BindCraft (no PyRosetta or weights)
 RUN chmod +x install_bindcraft.sh && \
     bash install_bindcraft.sh --cuda '12.4' --pkg_manager 'mamba'
