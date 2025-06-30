@@ -38,6 +38,7 @@ done
 
 # Download and install PyRosetta (offline)
 PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
+PACKAGE_NAME=$(basename: "$PACKAGE_URL")
 PACKAGE_DIR="/tmp/pyrosetta"
 ENV_PATH="/opt/conda/envs/BindCraft"
 
