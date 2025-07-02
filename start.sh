@@ -5,6 +5,11 @@ STATUS_FILE="/workspace/status.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 # set -e  # Temporarily disabled during testing
 
+cd /app/bindcraft || {
+  echo "[FAIL] Cannot change to /app/bindcraft" | tee -a "$STATUS_FILE"
+  exit 1
+}
+
 echo "=== [STARTUP] $(date) ==="
 echo "Log output redirected to $LOG_FILE"
 
