@@ -38,22 +38,68 @@ done
 
 # Download and install PyRosetta (offline)
 PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
-PACKAGE_NAME=$(basename: "$PACKAGE_URL")
+PACKAGE_NAME=$(basename "$PACKAGE_URL")
 PACKAGE_DIR="/tmp/pyrosetta"
-ENV_PATH="/opt/conda/envs/BindCraft"
+STATUS_FILE="/workspace/status.log"
 
-echo "[STEP] Downloading PyRosetta package..."
-mkdir -p "$PACKAGE_DIR"
-cd "$PACKAGE_DIR"
-wget "$PACKAGE_URL" || {
+if [ -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
+  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
+else
+
+  echo "[STEP] Downloading PyRosetta package..."
+  mkdir -p "$PACKAGE_DIR"
+  cd "$PACKAGE_DIR"
+  wget "$PACKAGE_URL" -O "$PACKAGE_NAME" || {
   echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
+  exit 1
+}
+fi
+# Download and install PyRosetta (offline)
+PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
+PACKAGE_NAME=$(basename "$PACKAGE_URL")
+PACKAGE_DIR="/tmp/pyrosetta"
+STATUS_FILE="/workspace/status.log"
+
+if [ -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
+  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
+else
+  echo "[STEP] Downloading PyRosetta package..."
+  mkdir -p "$PACKAGE_DIR"
+  cd "$PACKAGE_DIR"
+  wget "$PACKAGE_URL" -O "$PACKAGE_NAME" || {
+    echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
+    exit 1
+  }
+fi
+
+# Activate environment again in case subshell lost it
+echo "[STEP] Activating BindCraft environment..."
+
+CONDA_BASE=$(dirname $(dirname $(which conda)))
+echo "[INFO] Using conda base at $CONDA_BASE"
+
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate BindCraft || {
+  echo "[FAIL] Failed to activate Conda environment" | tee -a "$STATUS_FILE"
+  exit 1
 }
 
+# Install PyRosetta
 echo "[STEP] Installing PyRosetta into BindCraft environment (offline)..."
-mamba install "$PACKAGE_NAME" --offline || {
+mamba install -y "$PACKAGE_DIR/$PACKAGE_NAME" --offline || {
   echo "[FAIL] Failed to install PyRosetta" | tee -a "$STATUS_FILE"
-}
-rm -rf "$PACKAGE_DIR"
+  exit 1
+  }
+
+# Verify PyRosetta import
+echo "[STEP] Verifying PyRosetta installation..."
+if python -c "import pyrosetta; pyrosetta.init()" >/dev/null 2>&1; then
+  echo "[SUCCESS] PyRosetta import and init successful!"
+  rm -rf "$PACKAGE_DIR"
+else
+  echo "[FAIL] PyRosetta import failed" | tee -a "$STATUS_FILE"
+  exit 1
+fi
 
 # Download AlphaFold2 weights if missing
 WEIGHTS_DIR="/workspace/params"
@@ -77,9 +123,19 @@ fi
 echo "[STEP] Cleaning up old Jupyter runtime files..."
 rm -f /root/.local/share/jupyter/runtime/*.pid || true
 
+# Install pykernel
+mamba install ipykernel -y || {
+  echo "[FAIL] Failed to install ipykernel" | tee -a "$STATUS_FILE"
+}
+# Register the kernel
+echo "[STEP] Registering Jupyter kernel..."
+python -m ipykernel install --user --name=BindCraft --display-name="Python (BindCraft)" || {
+  echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
+}
+
 # Launch JupyterLab
 echo "[STEP] Launching JupyterLab on port 8888..."
-jupyter lab /app/bindcraft-runpod-start.ipynb \
+jupyter lab bindcraft-runpod-start.ipynb \
   --ip=0.0.0.0 \
   --port=8888 \
   --allow-root \
@@ -89,5 +145,3 @@ jupyter lab /app/bindcraft-runpod-start.ipynb \
 }
 
 echo "=== [FINISHED] Startup complete: $(date) ==="
-
-
