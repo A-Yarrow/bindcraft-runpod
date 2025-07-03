@@ -29,6 +29,24 @@ mkdir -p \
   /workspace/inputs \
   /workspace/params
 
+# Auto-copy starter notebook to /workspace if not already present
+NOTEBOOK_SRC="/app/bindcraft/bindcraft-runpod-start.ipynb"
+NOTEBOOK_DEST="/workspace/bindcraft-runpod-start.ipynb"
+
+if [ ! -f "$NOTEBOOK_DEST" ]; then
+  echo "[INFO] Copying starter notebook to /workspace..."
+  cp "$NOTEBOOK_SRC" "$NOTEBOOK_DEST" || {
+    echo "[FAIL] Failed to copy starter notebook" | tee -a "$STATUS_FILE"
+    exit 1
+  }
+  chmod 666 "$NOTEBOOK_DEST" || {
+    echo "[FAIL] Failed to set permissions on notebook" | tee -a "$STATUS_FILE"
+    exit 1
+  }
+else
+  echo "[INFO] Notebook already exists in /workspace — skipping copy"
+fi
+
 # Copy default configs if missing
 for d in settings_target settings_filters settings_advanced inputs; do
   if [ -z "$(ls -A /workspace/$d 2>/dev/null)" ]; then
@@ -139,6 +157,7 @@ python -m ipykernel install --user --name=BindCraft --display-name="Python (Bind
 }
 
 # Launch JupyterLab
+cd /workspace
 echo "[STEP] Launching JupyterLab on port 8888..."
 jupyter lab bindcraft-runpod-start.ipynb \
   --ip=0.0.0.0 \

@@ -30,9 +30,10 @@ RUN chmod +x install_bindcraft.sh && \
     bash install_bindcraft.sh --cuda '12.4' --pkg_manager 'mamba'
 
 # Copy startup script and notebook
-COPY start.sh /app/start.sh
-COPY bindcraft-runpod-start.ipynb /app/bindcraft-runpod-start.ipynb
-RUN chmod +x /app/start.sh
+COPY start.sh /app/bindcraft/start.sh
+COPY bindcraft-runpod-start.ipynb /app/bindcraft/bindcraft-runpod-start.ipynb
+RUN chmod 755 /app/bindcraft/start.sh
+RUN chmod 644 /app/bindcraft/bindcraft-runpod-start.ipynb
 
 # Expose Jupyter port
 EXPOSE 8888
