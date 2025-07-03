@@ -40,7 +40,7 @@ EXPOSE 8888
 
 # Default command
 
-CMD ["/app/start.sh"] 
+CMD ["/app/bindcraft/start.sh"] 
 # For development, launch Jupyter notebook
 #EXPOSE 8888
 #CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--NotebookApp.token=", "--NotebookApp.password="]
