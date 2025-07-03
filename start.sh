@@ -3,24 +3,25 @@
 LOG_FILE="/workspace/startup.log"
 STATUS_FILE="/workspace/status.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
-# set -e  # Temporarily disabled during testing
 
+echo "=== [STARTUP] $(date) ==="
+echo "Log output redirected to $LOG_FILE"
+
+# --- Environment Setup ---
 cd /app/bindcraft || {
   echo "[FAIL] Cannot change to /app/bindcraft" | tee -a "$STATUS_FILE"
   exit 1
 }
 
-echo "=== [STARTUP] $(date) ==="
-echo "Log output redirected to $LOG_FILE"
-
-# Activate Conda environment
 echo "[STEP] Activating Conda environment..."
 source /opt/conda/etc/profile.d/conda.sh
 conda activate BindCraft || {
   echo "[FAIL] Failed to activate Conda environment" | tee -a "$STATUS_FILE"
+  exit 1
 }
-# Create required workspace directories
-echo "[STEP] Creating persistent /workspace directories if they don't exist..."
+
+# --- Directory Setup ---
+echo "[STEP] Creating persistent /workspace directories..."
 mkdir -p \
   /workspace/settings_target \
   /workspace/settings_filters \
@@ -29,25 +30,21 @@ mkdir -p \
   /workspace/inputs \
   /workspace/params
 
-# Auto-copy starter notebook to /workspace if not already present
+# --- Copy Starter Notebook ---
 NOTEBOOK_SRC="/app/bindcraft/bindcraft-runpod-start.ipynb"
 NOTEBOOK_DEST="/workspace/bindcraft-runpod-start.ipynb"
 
 if [ ! -f "$NOTEBOOK_DEST" ]; then
   echo "[INFO] Copying starter notebook to /workspace..."
-  cp "$NOTEBOOK_SRC" "$NOTEBOOK_DEST" || {
+  cp "$NOTEBOOK_SRC" "$NOTEBOOK_DEST" && chmod 666 "$NOTEBOOK_DEST" || {
     echo "[FAIL] Failed to copy starter notebook" | tee -a "$STATUS_FILE"
-    exit 1
-  }
-  chmod 666 "$NOTEBOOK_DEST" || {
-    echo "[FAIL] Failed to set permissions on notebook" | tee -a "$STATUS_FILE"
     exit 1
   }
 else
   echo "[INFO] Notebook already exists in /workspace — skipping copy"
 fi
 
-# Copy default configs if missing
+# --- Copy Default Configs ---
 for d in settings_target settings_filters settings_advanced inputs; do
   if [ -z "$(ls -A /workspace/$d 2>/dev/null)" ]; then
     echo "[INFO] Copying default $d to /workspace/$d"
@@ -59,33 +56,12 @@ for d in settings_target settings_filters settings_advanced inputs; do
   fi
 done
 
-# Download and install PyRosetta (offline)
+# --- PyRosetta Offline Install ---
 PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
 PACKAGE_NAME=$(basename "$PACKAGE_URL")
 PACKAGE_DIR="/tmp/pyrosetta"
-STATUS_FILE="/workspace/status.log"
 
-if [ -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
-  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
-else
-
-  echo "[STEP] Downloading PyRosetta package..."
-  mkdir -p "$PACKAGE_DIR"
-  cd "$PACKAGE_DIR"
-  wget "$PACKAGE_URL" -O "$PACKAGE_NAME" || {
-  echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
-  exit 1
-}
-fi
-# Download and install PyRosetta (offline)
-PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
-PACKAGE_NAME=$(basename "$PACKAGE_URL")
-PACKAGE_DIR="/tmp/pyrosetta"
-STATUS_FILE="/workspace/status.log"
-
-if [ -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
-  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
-else
+if [ ! -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
   echo "[STEP] Downloading PyRosetta package..."
   mkdir -p "$PACKAGE_DIR"
   cd "$PACKAGE_DIR"
@@ -93,29 +69,17 @@ else
     echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
     exit 1
   }
+else
+  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
 fi
 
-# Activate environment again in case subshell lost it
-echo "[STEP] Activating BindCraft environment..."
-
-CONDA_BASE=$(dirname $(dirname $(which conda)))
-echo "[INFO] Using conda base at $CONDA_BASE"
-
-source "$CONDA_BASE/etc/profile.d/conda.sh"
-conda activate BindCraft || {
-  echo "[FAIL] Failed to activate Conda environment" | tee -a "$STATUS_FILE"
-  exit 1
-}
-
-# Install PyRosetta
-echo "[STEP] Installing PyRosetta into BindCraft environment (offline)..."
+echo "[STEP] Installing PyRosetta (offline)..."
 mamba install -y "$PACKAGE_DIR/$PACKAGE_NAME" --offline || {
   echo "[FAIL] Failed to install PyRosetta" | tee -a "$STATUS_FILE"
   exit 1
-  }
+}
 
-# Verify PyRosetta import
-echo "[STEP] Verifying PyRosetta installation..."
+echo "[STEP] Verifying PyRosetta..."
 if python -c "import pyrosetta; pyrosetta.init()" >/dev/null 2>&1; then
   echo "[SUCCESS] PyRosetta import and init successful!"
   rm -rf "$PACKAGE_DIR"
@@ -124,48 +88,64 @@ else
   exit 1
 fi
 
-# Download AlphaFold2 weights if missing
-WEIGHTS_DIR="/workspace/params"
-WEIGHTS_FILE="${WEIGHTS_DIR}/params_model_5_ptm.npz"
-if [ ! -f "${WEIGHTS_FILE}" ]; then
-  echo "[STEP] Downloading AlphaFold2 weights to ${WEIGHTS_DIR}..."
-  cd "${WEIGHTS_DIR}"
+# --- AlphaFold Weights ---
+WEIGHTS_FILE="/workspace/params/params_model_5_ptm.npz"
+if [ ! -f "$WEIGHTS_FILE" ]; then
+  echo "[STEP] Downloading AlphaFold2 weights..."
+  cd /workspace/params
   wget https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
     echo "[FAIL] Failed to download AlphaFold2 weights" | tee -a "$STATUS_FILE"
   }
   echo "[INFO] Extracting weights..."
-  tar -xf alphafold_params_2022-12-06.tar || {
-    echo "[FAIL] Failed to extract AlphaFold2 weights" | tee -a "$STATUS_FILE"
+  tar -xf alphafold_params_2022-12-06.tar && rm alphafold_params_2022-12-06.tar || {
+    echo "[FAIL] Failed to extract weights" | tee -a "$STATUS_FILE"
   }
-  rm alphafold_params_2022-12-06.tar
 else
-  echo "[INFO] AlphaFold2 weights already present at $WEIGHTS_FILE"
+  echo "[INFO] AlphaFold2 weights already present"
 fi
 
-# Clean up old Jupyter PID files
-echo "[STEP] Cleaning up old Jupyter runtime files..."
-rm -f /root/.local/share/jupyter/runtime/*.pid || true
-
-# Install pykernel
-mamba install ipykernel -y || {
+# --- Kernel Registration ---
+echo "[STEP] Installing ipykernel and registering BindCraft kernel..."
+mamba install -y ipykernel || {
   echo "[FAIL] Failed to install ipykernel" | tee -a "$STATUS_FILE"
 }
-# Register the kernel
-echo "[STEP] Registering Jupyter kernel..."
+
 python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)" --sys-prefix || {
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
 }
 
-# Launch JupyterLab
+# --- JupyterLab Launch ---
+echo "[STEP] Cleaning up old Jupyter runtime files..."
+rm -f /root/.local/share/jupyter/runtime/*.pid || true
+
+echo "[STEP] Disabling unused Jupyter extensions..."
+jupyter server extension disable jupyter_archive
+jupyter server extension disable nbclassic
+
 cd /workspace
 echo "[STEP] Launching JupyterLab on port 8888..."
-jupyter lab bindcraft-runpod-start.ipynb \
-  --ip=0.0.0.0 \
-  --port=8888 \
-  --allow-root \
-  --NotebookApp.token='' \
-  --NotebookApp.password='' || {
-    echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
-}
+
+if [ -f "bindcraft-runpod-start.ipynb" ]; then
+  jupyter lab bindcraft-runpod-start.ipynb \
+    --NotebookApp.allow_origin='*' \
+    --ip=0.0.0.0 \
+    --port=8888 \
+    --allow-root \
+    --NotebookApp.token='' \
+    --NotebookApp.password='' || {
+      echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
+    }
+else
+  jupyter lab \
+    --NotebookApp.allow_origin='*' \
+    --ip=0.0.0.0 \
+    --port=8888 \
+    --allow-root \
+    --NotebookApp.token='' \
+    --NotebookApp.password='' || {
+      echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
+    }
+fi
 
 echo "=== [FINISHED] Startup complete: $(date) ==="
+
