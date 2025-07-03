@@ -152,7 +152,7 @@ mamba install ipykernel -y || {
 }
 # Register the kernel
 echo "[STEP] Registering Jupyter kernel..."
-python -m ipykernel install --user --name=BindCraft --display-name="Python (BindCraft)" || {
+python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)" --sys-prefix || {
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
 }
 
