@@ -29,9 +29,7 @@ WORKDIR /app/bindcraft
 RUN chmod +x install_bindcraft.sh && \
     bash install_bindcraft.sh --cuda '12.4' --pkg_manager 'mamba'
 
-# Copy startup script and notebook
-COPY start.sh /app/bindcraft/start.sh
-COPY bindcraft-runpod-start.ipynb /app/bindcraft/bindcraft-runpod-start.ipynb
+# Set permissions on startup script and notebook
 RUN chmod 755 /app/bindcraft/start.sh
 RUN chmod 644 /app/bindcraft/bindcraft-runpod-start.ipynb
 
@@ -39,7 +37,6 @@ RUN chmod 644 /app/bindcraft/bindcraft-runpod-start.ipynb
 EXPOSE 8888
 
 # Default command
-
 CMD ["/app/bindcraft/start.sh"] 
 # For development, launch Jupyter notebook
 #EXPOSE 8888
