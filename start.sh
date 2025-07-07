@@ -27,8 +27,15 @@ mkdir -p \
   /workspace/settings_filters \
   /workspace/settings_advanced \
   /workspace/outputs/PDL1 \
-  /workspace/inputs \
-  /workspace/params
+  /workspace/inputs
+
+# Creating the params directory if it doesn't exist
+if [ ! -d "/app/bindcraft/params" ]; then
+  echo "Creating params directory in /app/bindcraft"
+  mkdir -p /app/bindcraft/params
+else
+  echo "Params directory already exists in /app/bindcraft"
+fi
 
 # --- Copy Starter Notebook ---
 NOTEBOOK_SRC="/app/bindcraft/bindcraft-runpod-start.ipynb"
@@ -89,10 +96,10 @@ else
 fi
 
 # --- AlphaFold Weights ---
-WEIGHTS_FILE="/workspace/params/params_model_5_ptm.npz"
+WEIGHTS_FILE="/app/bindcraft/params/params_model_5_ptm.npz"
 if [ ! -f "$WEIGHTS_FILE" ]; then
   echo "[STEP] Downloading AlphaFold2 weights..."
-  cd /workspace/params
+  cd /app/bindcraft/params
   wget https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
     echo "[FAIL] Failed to download AlphaFold2 weights" | tee -a "$STATUS_FILE"
   }
