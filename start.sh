@@ -1,15 +1,42 @@
 #!/bin/bash
 
+# ───────────────────────────────────────────────────────────────
+# ⚙️ Config variables (set once here)
+# ───────────────────────────────────────────────────────────────
 LOG_FILE="/workspace/startup.log"
 STATUS_FILE="/workspace/status.log"
+
+BINDCRAFT_DIR="/app/bindcraft"
+WORKSPACE_DIR="/workspace"
+
+NOTEBOOK_SRC="$BINDCRAFT_DIR/bindcraft-runpod-start.ipynb"
+NOTEBOOK_DEST="$WORKSPACE_DIR/bindcraft-runpod-start.ipynb"
+
+PYROSETTA_PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
+PYROSETTA_PACKAGE_NAME=$(basename "$PYROSETTA_PACKAGE_URL")
+PYROSETTA_PACKAGE_DIR="/tmp/pyrosetta"
+
+ALPHAFOLD_WEIGHTS_ARCHIVE="alphafold_params_2022-12-06.tar"
+ALPHAFOLD_WEIGHTS_FILE="$BINDCRAFT_DIR/params/params_model_5_ptm.npz"
+
+JUPYTER_IP="0.0.0.0"
+JUPYTER_PORT=8888
+JUPYTER_TOKEN=""
+JUPYTER_PASSWORD=""
+
+# ───────────────────────────────────────────────────────────────
+# Redirect all stdout/stderr to log file
+# ───────────────────────────────────────────────────────────────
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "=== [STARTUP] $(date) ==="
 echo "Log output redirected to $LOG_FILE"
 
-# --- Environment Setup ---
-cd /app/bindcraft || {
-  echo "[FAIL] Cannot change to /app/bindcraft" | tee -a "$STATUS_FILE"
+# ───────────────────────────────────────────────────────────────
+# Environment Setup
+# ───────────────────────────────────────────────────────────────
+cd "$BINDCRAFT_DIR" || {
+  echo "[FAIL] Cannot change to $BINDCRAFT_DIR" | tee -a "$STATUS_FILE"
   exit 1
 }
 
@@ -20,68 +47,68 @@ conda activate BindCraft || {
   exit 1
 }
 
-# --- Directory Setup ---
+# ───────────────────────────────────────────────────────────────
+# Directory Setup (persistent workspace)
+# ───────────────────────────────────────────────────────────────
 echo "[STEP] Creating persistent /workspace directories..."
 mkdir -p \
-  /workspace/settings_target \
-  /workspace/settings_filters \
-  /workspace/settings_advanced \
-  /workspace/outputs/PDL1 \
-  /workspace/inputs
+  "$WORKSPACE_DIR/settings_target" \
+  "$WORKSPACE_DIR/settings_filters" \
+  "$WORKSPACE_DIR/settings_advanced" \
+  "$WORKSPACE_DIR/outputs/PDL1" \
+  "$WORKSPACE_DIR/inputs"
 
-# Creating the params directory if it doesn't exist
-if [ ! -d "/app/bindcraft/params" ]; then
-  echo "Creating params directory in /app/bindcraft"
-  mkdir -p /app/bindcraft/params
+if [ ! -d "$BINDCRAFT_DIR/params" ]; then
+  echo "[INFO] Creating params directory in $BINDCRAFT_DIR"
+  mkdir -p "$BINDCRAFT_DIR/params"
 else
-  echo "Params directory already exists in /app/bindcraft"
+  echo "[INFO] Params directory already exists in $BINDCRAFT_DIR"
 fi
 
-# --- Copy Starter Notebook ---
-NOTEBOOK_SRC="/app/bindcraft/bindcraft-runpod-start.ipynb"
-NOTEBOOK_DEST="/workspace/bindcraft-runpod-start.ipynb"
-
+# ───────────────────────────────────────────────────────────────
+# Copy Starter Notebook if missing
+# ───────────────────────────────────────────────────────────────
 if [ ! -f "$NOTEBOOK_DEST" ]; then
-  echo "[INFO] Copying starter notebook to /workspace..."
+  echo "[INFO] Copying starter notebook to $WORKSPACE_DIR..."
   cp "$NOTEBOOK_SRC" "$NOTEBOOK_DEST" && chmod 666 "$NOTEBOOK_DEST" || {
     echo "[FAIL] Failed to copy starter notebook" | tee -a "$STATUS_FILE"
     exit 1
   }
 else
-  echo "[INFO] Notebook already exists in /workspace — skipping copy"
+  echo "[INFO] Notebook already exists in $WORKSPACE_DIR — skipping copy"
 fi
 
-# --- Copy Default Configs ---
+# ───────────────────────────────────────────────────────────────
+# Copy Default Configs if missing
+# ───────────────────────────────────────────────────────────────
 for d in settings_target settings_filters settings_advanced inputs; do
-  if [ -z "$(ls -A /workspace/$d 2>/dev/null)" ]; then
-    echo "[INFO] Copying default $d to /workspace/$d"
-    cp -r /app/bindcraft/$d/* /workspace/$d/ || {
+  if [ -z "$(ls -A "$WORKSPACE_DIR/$d" 2>/dev/null)" ]; then
+    echo "[INFO] Copying default $d to $WORKSPACE_DIR/$d"
+    cp -r "$BINDCRAFT_DIR/$d/"* "$WORKSPACE_DIR/$d/" || {
       echo "[FAIL] Failed to copy $d configs" | tee -a "$STATUS_FILE"
     }
   else
-    echo "[INFO] $d already exists in /workspace — skipping copy"
+    echo "[INFO] $d already exists in $WORKSPACE_DIR — skipping copy"
   fi
 done
 
-# --- PyRosetta Offline Install ---
-PACKAGE_URL="https://conda.graylab.jhu.edu/linux-64/pyrosetta-2025.03+release.1f5080a079-py310_0.tar.bz2"
-PACKAGE_NAME=$(basename "$PACKAGE_URL")
-PACKAGE_DIR="/tmp/pyrosetta"
-
-if [ ! -f "$PACKAGE_DIR/$PACKAGE_NAME" ]; then
+# ───────────────────────────────────────────────────────────────
+# PyRosetta Offline Install
+# ───────────────────────────────────────────────────────────────
+if [ ! -f "$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME" ]; then
   echo "[STEP] Downloading PyRosetta package..."
-  mkdir -p "$PACKAGE_DIR"
-  cd "$PACKAGE_DIR"
-  wget "$PACKAGE_URL" -O "$PACKAGE_NAME" || {
+  mkdir -p "$PYROSETTA_PACKAGE_DIR"
+  cd "$PYROSETTA_PACKAGE_DIR"
+  wget "$PYROSETTA_PACKAGE_URL" -O "$PYROSETTA_PACKAGE_NAME" || {
     echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
     exit 1
   }
 else
-  echo "[INFO] PyRosetta package already exists at $PACKAGE_DIR/$PACKAGE_NAME"
+  echo "[INFO] PyRosetta package already exists at $PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME"
 fi
 
 echo "[STEP] Installing PyRosetta (offline)..."
-mamba install -y "$PACKAGE_DIR/$PACKAGE_NAME" --offline || {
+mamba install -y "$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME" --offline || {
   echo "[FAIL] Failed to install PyRosetta" | tee -a "$STATUS_FILE"
   exit 1
 }
@@ -89,29 +116,32 @@ mamba install -y "$PACKAGE_DIR/$PACKAGE_NAME" --offline || {
 echo "[STEP] Verifying PyRosetta..."
 if python -c "import pyrosetta; pyrosetta.init()" >/dev/null 2>&1; then
   echo "[SUCCESS] PyRosetta import and init successful!"
-  rm -rf "$PACKAGE_DIR"
+  rm -rf "$PYROSETTA_PACKAGE_DIR"
 else
   echo "[FAIL] PyRosetta import failed" | tee -a "$STATUS_FILE"
   exit 1
 fi
 
-# --- AlphaFold Weights ---
-WEIGHTS_FILE="/app/bindcraft/params/params_model_5_ptm.npz"
-if [ ! -f "$WEIGHTS_FILE" ]; then
+# ───────────────────────────────────────────────────────────────
+# AlphaFold Weights Download and Extraction
+# ───────────────────────────────────────────────────────────────
+if [ ! -f "$ALPHAFOLD_WEIGHTS_FILE" ]; then
   echo "[STEP] Downloading AlphaFold2 weights..."
-  cd /app/bindcraft/params
+  cd "$BINDCRAFT_DIR/params"
   wget https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
     echo "[FAIL] Failed to download AlphaFold2 weights" | tee -a "$STATUS_FILE"
   }
   echo "[INFO] Extracting weights..."
-  tar -xf alphafold_params_2022-12-06.tar && rm alphafold_params_2022-12-06.tar || {
+  tar -xf "$ALPHAFOLD_WEIGHTS_ARCHIVE" && rm "$ALPHAFOLD_WEIGHTS_ARCHIVE" || {
     echo "[FAIL] Failed to extract weights" | tee -a "$STATUS_FILE"
   }
 else
   echo "[INFO] AlphaFold2 weights already present"
 fi
 
-# --- Kernel Registration ---
+# ───────────────────────────────────────────────────────────────
+# Kernel Registration
+# ───────────────────────────────────────────────────────────────
 echo "[STEP] Installing ipykernel and registering BindCraft kernel..."
 mamba install -y ipykernel || {
   echo "[FAIL] Failed to install ipykernel" | tee -a "$STATUS_FILE"
@@ -121,7 +151,9 @@ python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)"
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
 }
 
-# --- JupyterLab Launch ---
+# ───────────────────────────────────────────────────────────────
+# JupyterLab Launch
+# ───────────────────────────────────────────────────────────────
 echo "[STEP] Cleaning up old Jupyter runtime files..."
 rm -f /root/.local/share/jupyter/runtime/*.pid || true
 
@@ -129,32 +161,27 @@ echo "[STEP] Disabling unused Jupyter extensions..."
 jupyter server extension disable jupyter_archive
 jupyter server extension disable nbclassic
 
-cd /workspace
-jupyter trust bindcraft-runpod-start.ipynb
+cd "$WORKSPACE_DIR"
+echo "[STEP] Launching JupyterLab on port $JUPYTER_PORT..."
 
-echo "[STEP] Launching JupyterLab on port 8888..."
-
-if [ -f "bindcraft-runpod-start.ipynb" ]; then
-  jupyter lab bindcraft-runpod-start.ipynb \
-    --NotebookApp.allow_origin='*' \
-    --ip=0.0.0.0 \
-    --port=8888 \
-    --allow-root \
-    --NotebookApp.token='' \
-    --NotebookApp.password='' || {
-      echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
-    }
+if [ -f "$NOTEBOOK_DEST" ]; then
+  echo "[INFO] Trusting notebook: $(basename "$NOTEBOOK_DEST")"
+  jupyter trust "$(basename "$NOTEBOOK_DEST")"
+  START_NOTEBOOK="$(basename "$NOTEBOOK_DEST")"
 else
-  jupyter lab \
-    --NotebookApp.allow_origin='*' \
-    --ip=0.0.0.0 \
-    --port=8888 \
-    --allow-root \
-    --NotebookApp.token='' \
-    --NotebookApp.password='' || {
-      echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
-    }
+  echo "[WARN] Notebook not found. Launching without a specific notebook."
+  START_NOTEBOOK=""
 fi
 
-echo "=== [FINISHED] Startup complete: $(date) ==="
+jupyter lab $START_NOTEBOOK \
+  --notebook-dir="$WORKSPACE_DIR" \
+  --NotebookApp.allow_origin='*' \
+  --ip="$JUPYTER_IP" \
+  --port="$JUPYTER_PORT" \
+  --allow-root \
+  --NotebookApp.token="$JUPYTER_TOKEN" \
+  --NotebookApp.password="$JUPYTER_PASSWORD" || {
+    echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
+  }
 
+echo "=== [FINISHED] Startup complete: $(date) ==="
