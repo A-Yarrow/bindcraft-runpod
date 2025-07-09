@@ -130,6 +130,8 @@ jupyter server extension disable jupyter_archive
 jupyter server extension disable nbclassic
 
 cd /workspace
+jupyter trust bindcraft-runpod-start.ipynb
+
 echo "[STEP] Launching JupyterLab on port 8888..."
 
 if [ -f "bindcraft-runpod-start.ipynb" ]; then
