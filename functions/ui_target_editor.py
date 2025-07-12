@@ -7,7 +7,7 @@ from functools import partial
 import ipywidgets as widgets
 from IPython.display import display
 
-def parse_target_json(filepath):
+def load_target_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
@@ -57,12 +57,15 @@ def target_editor_widget(data):
                                           style={'description_width': 'initial'})
     return widget_dict
 
-def launch_target_editor(json_target_path='/workspace/settings_target/PDL1.json'):
-    data = parse_target_json(json_target_path)
+def main_launch_target_editor(json_target_path: str) -> None:
+    """
+    Launch the target editor UI to edit a JSON file.
+    """
+    data = load_target_json(json_target_path)
 
     target_folder_widget = widgets.Text(
         value=Path(json_target_path).stem,
-        description='Subfolder to save json file to',
+        description='Subfolder to save json file to (optional):',
         style={'description_width': 'initial'}
     )
 
@@ -89,3 +92,4 @@ def launch_target_editor(json_target_path='/workspace/settings_target/PDL1.json'
     for widget in widget_dict.values():
         display(widget)
     display(save_button)
+     
