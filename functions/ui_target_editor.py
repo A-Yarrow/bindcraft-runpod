@@ -35,13 +35,26 @@ def update_data(data, widget_dict):
         updated_data[key] = val
     return updated_data
 
-def on_save_clicked(button, data, widget_dict, target_folder_widget, filename_widget, json_target_path):
+def on_save_clicked(button, 
+                    data, widget_dict, 
+                    target_folder_widget, 
+                    filename_widget, 
+                    json_target_path,
+                    path_output_widget):
+    
     print("[DEBUG] Save button clicked")
     target_folder = target_folder_widget.value.strip()
     filename = filename_widget.value.strip()
     updated_data = update_data(data, widget_dict)
     save_target_json(target_folder, filename, json_target_path, updated_data)
     print(f"Saved parameters to {filename} in folder {target_folder}")
+
+    new_path = os.path.join(
+    os.path.dirname(json_target_path),
+    target_folder,
+    filename
+    )
+    path_output_widget.value = new_path 
 
 def target_editor_widget(data):
     widget_dict = {}
@@ -57,7 +70,7 @@ def target_editor_widget(data):
                                           style={'description_width': 'initial'})
     return widget_dict
 
-def main_launch_target_editor(json_target_path: str) -> None:
+def main_launch_target_editor(json_target_path: str, path_output_widget: widgets.Text) -> None:
     """
     Launch the target editor UI to edit a JSON file.
     """
@@ -84,7 +97,8 @@ def main_launch_target_editor(json_target_path: str) -> None:
         widget_dict=widget_dict,
         target_folder_widget=target_folder_widget,
         filename_widget=filename_widget,
-        json_target_path=json_target_path
+        json_target_path=json_target_path,
+        path_output_widget=path_output_widget
     ))
 
     display(filename_widget)

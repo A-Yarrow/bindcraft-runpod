@@ -3,27 +3,28 @@ import sys
 from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display
+from settings import ENV, SETTINGS  # 👈 import the centralized config
 
-# Configuration for paths (adjust as needed for cloud/local)
-SETTINGS_DIRS = [
-    '/workspace/settings_filters',
-    '/workspace/settings_advanced'
-]
-BASE_PATH = '/workspace'  # or os.environ.get('BINDCRAFT_BASE', '/workspace')
-BINDCRAFT_TEMPLATE_PATH = '/app/bindcraft/bindcraft_run_template.sh'
-BINDCRAFT_OUTPUT_PATH = f'{BASE_PATH}/bindcraft_run.sh'
-FUNCTIONS_PATH = '/app/bindcraft/functions'
-DEFAULT_TARGET_JSON = f'{BASE_PATH}/settings_target/PDL1.json'
+# Choose the environment: 'DEV' or 'PROD'
 
-# Add path to import custom modules
+
+# Load relevant settings from the dictionary
+BASE_PATH = SETTINGS[f'{ENV}_RUN_DIR']
+FUNCTIONS_PATH = SETTINGS[f'{ENV}_FUNCTIONS_PATH']
+SETTINGS_DIRS = SETTINGS[f'{ENV}_SETTINGS_DIRS']
+BINDCRAFT_TEMPLATE_PATH = SETTINGS[f'{ENV}_BINDCRAFT_TEMPLATE_PATH']
+BINDCRAFT_OUTPUT_PATH = SETTINGS[f'{ENV}_BINDCRAFT_OUTPUT_PATH']
+DEFAULT_TARGET_JSON = SETTINGS[f'{ENV}_DEFAULT_TARGET_JSON']
+
+# Add function path for custom imports
 sys.path.append(FUNCTIONS_PATH)
-sys.path.append(str(Path(FUNCTIONS_PATH).parent))
+sys.path.append(str(Path(FUNCTIONS_PATH).parent))  # Optional: for modules in parent
 
-# Import both UIs
+# Import the UIs
 from ui_target_editor import main_launch_target_editor
 from ui_bindcraft_launch import main_launch_bindcraft_UI
 
-# Shared widget that will be updated across both steps
+# Shared widget that gets updated between steps
 selected_json_target_path_widget = widgets.Text(
     value=DEFAULT_TARGET_JSON,
     description='Target JSON:',
@@ -39,7 +40,7 @@ def launch_all_ui():
     print("Step 1: Edit your target JSON file.")
     main_launch_target_editor(
         json_target_path=selected_json_target_path_widget.value.strip(),
-        path_output_widget=selected_json_target_path_widget  # <-- Live update on save
+        path_output_widget=selected_json_target_path_widget
     )
 
     print("\nStep 2: Select settings and run BindCraft.")
@@ -48,5 +49,5 @@ def launch_all_ui():
         settings_dirs=SETTINGS_DIRS,
         base_path=BASE_PATH,
         bindcraft_template_run_file=BINDCRAFT_TEMPLATE_PATH,
-        output_dir=BASE_PATH  # same as /workspace
+        output_dir=BASE_PATH
     )
