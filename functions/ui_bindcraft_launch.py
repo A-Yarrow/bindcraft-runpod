@@ -83,7 +83,7 @@ def on_submit_settings_clicked(button,
     
 def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     """Run the updated BindCraft run file, unless in DEV mode."""
-
+    print(f"[DEBUG] run_bindcraft() triggered with: {bindcraft_run_file}")
     from settings import ENV  # Import here if ENV isn't global
 
     if ENV == 'DEV':
@@ -131,8 +131,9 @@ def main_launch_bindcraft_UI(
         layout=widgets.Layout(width='30%')
     )
 
-    run_bindcraft_button.on_click(partial(run_bindcraft,
-        bindcraft_run_file = bindcraft_template_run_file.replace('template', '')))
+    run_bindcraft_button.on_click(
+        partial(run_bindcraft,
+        bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')))
     
 
     print("Select your settings files:")
