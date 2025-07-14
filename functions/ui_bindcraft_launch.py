@@ -10,6 +10,8 @@ from settings import ENV
 # GLOBAL HOLDERS
 selected_paths_holder = {}
 
+output_box = widgets.Output()
+
 def settings_widget(dirs: list) -> dict:
     """Build dropdown widgets for JSON settings files in specified directories."""
     settings_widget_dict = {}
@@ -38,7 +40,8 @@ def on_submit_settings_clicked(button,
     selected_paths_holder.update(selected_paths)
     print("Selected settings:")
     for k, v in selected_paths_holder.items():
-        print(f"  {k}: {v}")
+        with output_box:
+            print(f"  {k}: {v}")
 
     """Fill template with settings paths and run bindcraft_run.sh."""
     for folder, file in selected_paths_holder.items():
@@ -50,11 +53,13 @@ def on_submit_settings_clicked(button,
         advanced_path = selected_paths_holder['settings_advanced']
         selected_paths_holder['settings_target'] = json_target_path
     except KeyError:
-        print("Please click the Submit button to select settings files.")
+        with output_box:
+            print("Please click the Submit button to select settings files.")
         return
 
     if not filters_path or not advanced_path or not json_target_path:
-        print("Missing required paths. Make sure all fields are selected.")
+        with output_box:
+            print("Missing required paths. Make sure all fields are selected.")
         return
 
     print(f"Using:")
@@ -79,26 +84,32 @@ def on_submit_settings_clicked(button,
         out.write(new_template)
     
     os.chmod(bindcraft_run_file, 0o755)
-    print(f"🚀 Script written to {bindcraft_run_file}.")
+    with output_box:
+        print(f"Script written to {bindcraft_run_file}.")
     
 def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     """Run the updated BindCraft run file, unless in DEV mode."""
-    print(f"[DEBUG] run_bindcraft() triggered with: {bindcraft_run_file}")
+    with output_box:
+        print(f"[DEBUG] run_bindcraft() triggered with: {bindcraft_run_file}")
     from settings import ENV  # Import here if ENV isn't global
 
     if ENV == 'DEV':
-        print("🧪 [DEV MODE] Not running BindCraft — skipping actual execution.")
+        with output_box:
+            print("[DEV MODE] Not running BindCraft — skipping actual execution.")
         return
 
     if not bindcraft_run_file or not os.path.exists(bindcraft_run_file):
-        print(f"[ERROR] BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
+        with output_box:
+            print(f"[ERROR] BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
         return
 
-    print(f"Running BindCraft with script: {bindcraft_run_file}")
+    with output_box:
+        print(f"Running BindCraft with script: {bindcraft_run_file}")
     try:
         subprocess.run(["bash", bindcraft_run_file], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[ERROR] BindCraft failed: {e}")
+        with output_box:
+            print(f"[ERROR] BindCraft failed: {e}")
 
 
 def main_launch_bindcraft_UI(
@@ -142,4 +153,5 @@ def main_launch_bindcraft_UI(
 
     display(submit_settings_button)
     display(run_bindcraft_button)
+    display(output_box)
 
