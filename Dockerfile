@@ -1,7 +1,7 @@
 # Use RunPod-compatible image with CUDA 12.4 and PyTorch
 FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
-# Install base tools and Miniconda (lightweight)
+# Install base tools and libraries
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Install Miniconda (lighter than Miniforge3)
 ENV CONDA_DIR=/opt/conda
 ENV PATH=$CONDA_DIR/bin:$PATH
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
-    bash miniconda.sh -b -p $CONDA_DIR && \
-    rm miniconda.sh
+RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh && \
+    bash miniforge.sh -b -p $CONDA_DIR && \
+    rm miniforge.sh
 
 # Set up Conda and Mamba
 RUN conda install -y -n base -c conda-forge mamba && \
