@@ -7,6 +7,8 @@ from functools import partial
 import ipywidgets as widgets
 from IPython.display import display
 
+editor_output_box = widgets.Output()
+
 def load_target_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
@@ -17,10 +19,12 @@ def save_target_json(target_folder, filename, json_target_path, data):
     os.makedirs(target_filepath, exist_ok=True)
     full_path = os.path.join(target_filepath, filename)
 
-    print(f"[DEBUG] Writing file to: {full_path}")
+    with editor_output_box: 
+        print(f"[DEBUG] Writing file to: {full_path}")
     with open(full_path, 'w') as f:
         json.dump(data, f, indent=4)
-    print(f"Data saved to {full_path}")
+    with editor_output_box:
+        print(f"Data saved to {full_path}")
 
 def update_data(data, widget_dict):
     updated_data = {}
@@ -30,7 +34,8 @@ def update_data(data, widget_dict):
             try:
                 val = json.loads(val)
             except json.JSONDecodeError:
-                print(f"Error decoding JSON for key '{key}', keeping original value.")
+                with editor_output_box:
+                    print(f"Error decoding JSON for key '{key}', keeping original value.")
                 val = data[key]
         updated_data[key] = val
     return updated_data
@@ -41,13 +46,14 @@ def on_save_clicked(button,
                     filename_widget, 
                     json_target_path,
                     path_output_widget):
-    
-    print("[DEBUG] Save button clicked")
+    with editor_output_box:
+        print(f'Save button clicked with json_target_path: {json_target_path}')
     target_folder = target_folder_widget.value.strip()
     filename = filename_widget.value.strip()
     updated_data = update_data(data, widget_dict)
     save_target_json(target_folder, filename, json_target_path, updated_data)
-    print(f"Saved parameters to {filename} in folder {target_folder}")
+    with editor_output_box:
+        print(f"Saved parameters to {filename} in folder {target_folder}")
 
     new_path = os.path.join(
     os.path.dirname(json_target_path),
@@ -106,4 +112,5 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
     for widget in widget_dict.values():
         display(widget)
     display(save_button)
+    display(editor_output_box)
      
