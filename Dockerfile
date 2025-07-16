@@ -22,7 +22,7 @@ RUN conda install -y -n base -c conda-forge mamba && \
     conda clean -afy
 
 # Clone BindCraft repository
-RUN git clone https://github.com/A-Yarrow/bindcraft-runpod.git /app/bindcraft
+RUN git clone --branch dev --single-branch https://github.com/A-Yarrow/bindcraft-runpod.git /app/bindcraft
 
 WORKDIR /app/bindcraft
 # Install BindCraft (no PyRosetta or weights)
