@@ -15,7 +15,7 @@ echo "[INFO] Logging output to '/home/yarrow/projects/bindcraft-runpod/outputs/P
 
 nohup python /app/bindcraft/bindcraft.py \
   --settings "/home/yarrow/projects/bindcraft-runpod/settings_target/PDL1.json" \
-  --filters "/home/yarrow/projects/bindcraft-runpod/settings_filters/no_filters.json" \
+  --filters "/home/yarrow/projects/bindcraft-runpod/settings_filters/default_filters.json" \
   --advanced "/home/yarrow/projects/bindcraft-runpod/settings_advanced/betasheet_4stage_multimer.json" \
   > "/home/yarrow/projects/bindcraft-runpod/outputs/PDL1/PDL1-bindcraft_log.txt" 2>&1 &
 
