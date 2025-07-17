@@ -1,11 +1,20 @@
 # file: functions/ui_target_editor.py
 
 import json
+import logging
 import os
 from pathlib import Path
 from functools import partial
 import ipywidgets as widgets
 from IPython.display import display
+
+# LOGGING CONFIGURATION
+logging.basicConfig(
+    filename='bindcraft_ui.log',
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 editor_output_box = widgets.Output()
 
@@ -21,10 +30,12 @@ def save_target_json(target_folder, filename, json_target_path, data):
 
     with editor_output_box: 
         print(f"[DEBUG] Writing file to: {full_path}")
+        logging.debug(f"Writing file to: {full_path}")
     with open(full_path, 'w') as f:
         json.dump(data, f, indent=4)
     with editor_output_box:
         print(f"Data saved to {full_path}")
+        logging.info(f"Data saved to {full_path}")
 
 def update_data(data, widget_dict):
     updated_data = {}
@@ -36,6 +47,7 @@ def update_data(data, widget_dict):
             except json.JSONDecodeError:
                 with editor_output_box:
                     print(f"Error decoding JSON for key '{key}', keeping original value.")
+                    logging.debug(f"Error decoding JSON for key '{key}', keeping original value.")
                 val = data[key]
         updated_data[key] = val
     return updated_data
@@ -48,13 +60,14 @@ def on_save_clicked(button,
                     path_output_widget):
     with editor_output_box:
         print(f'Save button clicked with json_target_path: {json_target_path}')
+        logging.debug(f'Save button clicked with json_target_path: {json_target_path}')
     target_folder = target_folder_widget.value.strip()
     filename = filename_widget.value.strip()
     updated_data = update_data(data, widget_dict)
     save_target_json(target_folder, filename, json_target_path, updated_data)
     with editor_output_box:
         print(f"Saved parameters to {filename} in folder {target_folder}")
-
+    logging.debug(f"Saved parameters to {filename} in folder {target_folder}")
     new_path = os.path.join(
     os.path.dirname(json_target_path),
     target_folder,
