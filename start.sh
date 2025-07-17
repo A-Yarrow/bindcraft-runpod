@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# ───────────────────────────────────────────────────────────────
-# ⚙️ Config variables (set once here)
-# ───────────────────────────────────────────────────────────────
+# Redirect all output to both the terminal (RunPod logs) and log file
 LOG_FILE="/workspace/startup.log"
-STATUS_FILE="/workspace/status.log"
 
+exec > >(awk '{ print strftime("[%Y-%m-%d %H:%M:%S]"), $0; fflush() }' | tee -a "$LOG_FILE") 2>&1
+chmod 644 "$LOG_FILE"
+
+echo "=== [STARTUP] $(date) ==="
+echo "Log output redirected to $LOG_FILE"
+
+# Config variables
 BINDCRAFT_DIR="/app/bindcraft"
 WORKSPACE_DIR="/workspace"
 
@@ -24,17 +28,8 @@ JUPYTER_PORT=8888
 JUPYTER_TOKEN=""
 JUPYTER_PASSWORD=""
 
-# ───────────────────────────────────────────────────────────────
-# Redirect all stdout/stderr to log file
-# ───────────────────────────────────────────────────────────────
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo "=== [STARTUP] $(date) ==="
-echo "Log output redirected to $LOG_FILE"
-
-# ───────────────────────────────────────────────────────────────
 # Environment Setup
-# ───────────────────────────────────────────────────────────────
+
 cd "$BINDCRAFT_DIR" || {
   echo "[FAIL] Cannot change to $BINDCRAFT_DIR" | tee -a "$STATUS_FILE"
   exit 1
@@ -47,9 +42,8 @@ conda activate BindCraft || {
   exit 1
 }
 
-# ───────────────────────────────────────────────────────────────
 # Directory Setup (persistent workspace)
-# ───────────────────────────────────────────────────────────────
+
 echo "[STEP] Creating persistent /workspace directories..."
 mkdir -p \
   "$WORKSPACE_DIR/settings_target" \
@@ -65,9 +59,8 @@ else
   echo "[INFO] Params directory already exists in $BINDCRAFT_DIR"
 fi
 
-# ───────────────────────────────────────────────────────────────
 # Copy Starter Notebook if missing
-# ───────────────────────────────────────────────────────────────
+
 if [ ! -f "$NOTEBOOK_DEST" ]; then
   echo "[INFO] Copying starter notebook to $WORKSPACE_DIR..."
   cp "$NOTEBOOK_SRC" "$NOTEBOOK_DEST" && chmod 666 "$NOTEBOOK_DEST" || {
@@ -78,9 +71,9 @@ else
   echo "[INFO] Notebook already exists in $WORKSPACE_DIR — skipping copy"
 fi
 
-# ───────────────────────────────────────────────────────────────
+
 # Copy Default Configs if missing
-# ───────────────────────────────────────────────────────────────
+
 for d in settings_target settings_filters settings_advanced inputs; do
   if [ -z "$(ls -A "$WORKSPACE_DIR/$d" 2>/dev/null)" ]; then
     echo "[INFO] Copying default $d to $WORKSPACE_DIR/$d"
@@ -92,9 +85,9 @@ for d in settings_target settings_filters settings_advanced inputs; do
   fi
 done
 
-# ───────────────────────────────────────────────────────────────
+
 # PyRosetta Offline Install
-# ───────────────────────────────────────────────────────────────
+
 if [ ! -f "$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME" ]; then
   echo "[STEP] Downloading PyRosetta package..."
   mkdir -p "$PYROSETTA_PACKAGE_DIR"
@@ -122,9 +115,7 @@ else
   exit 1
 fi
 
-# ───────────────────────────────────────────────────────────────
 # AlphaFold Weights Download and Extraction
-# ───────────────────────────────────────────────────────────────
 if [ ! -f "$ALPHAFOLD_WEIGHTS_FILE" ]; then
   echo "[STEP] Downloading AlphaFold2 weights..."
   cd "$BINDCRAFT_DIR/params"
@@ -139,9 +130,9 @@ else
   echo "[INFO] AlphaFold2 weights already present"
 fi
 
-# ───────────────────────────────────────────────────────────────
+
 # Kernel Registration
-# ───────────────────────────────────────────────────────────────
+
 echo "[STEP] Installing ipykernel and registering BindCraft kernel..."
 mamba install -y ipykernel || {
   echo "[FAIL] Failed to install ipykernel" | tee -a "$STATUS_FILE"
@@ -151,9 +142,8 @@ python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)"
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
 }
 
-# ───────────────────────────────────────────────────────────────
 # JupyterLab Launch
-# ───────────────────────────────────────────────────────────────
+
 echo "[STEP] Cleaning up old Jupyter runtime files..."
 rm -f /root/.local/share/jupyter/runtime/*.pid || true
 
