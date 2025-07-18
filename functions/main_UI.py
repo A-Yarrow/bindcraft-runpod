@@ -1,12 +1,25 @@
 import os
 import sys
+import logging
 from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display
 from settings import ENV, SETTINGS  # 👈 import the centralized config
 
-# Choose the environment: 'DEV' or 'PROD'
+# Logging configuration
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+
+file_handler = logging.FileHandler('Bindcraft_launch_UI.log')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
 
 # Load relevant settings from the dictionary
 BASE_PATH = SETTINGS[f'{ENV}_RUN_DIR']

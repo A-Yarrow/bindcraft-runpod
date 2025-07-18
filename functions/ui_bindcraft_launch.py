@@ -7,15 +7,7 @@ import ipywidgets as widgets
 from IPython.display import display
 from functools import partial
 from settings import ENV
-
-# LOGGING CONFIGURATION
-logging.basicConfig(
-    filename='bindcraft_ui.log',
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-
+from main_UI import logger
 # GLOBAL HOLDERS
 selected_paths_holder = {}
 
@@ -63,14 +55,14 @@ def on_submit_settings_clicked(button,
         selected_paths_holder['settings_target'] = json_target_path
     except KeyError:
         with bindcraft_launch_box:
-            print("Please click the Submit button to select settings files.")
-            logging.debug("KeyError: Missing one or more settings paths.")
+            #print("Please click the Submit button to select settings files.")
+            logger.exception("KeyError: Missing one or more settings paths.")
         return
 
     if not filters_path or not advanced_path or not json_target_path:
         with bindcraft_launch_box:
-            print("Missing required paths. Make sure all fields are selected.")
-            logging.debug("Missing required paths in selected_paths_holder.")
+            #print("Missing required paths. Make sure all fields are selected.")
+            logger.debug("Missing required paths in selected_paths_holder.")
         return
 
     print(f"Using:")
@@ -93,41 +85,41 @@ def on_submit_settings_clicked(button,
     bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')
     with open(bindcraft_run_file, 'w') as out:
         out.write(new_template)
-        logging.debug(f"BindCraft run script written to: {bindcraft_run_file}")
+        logger.debug(f"BindCraft run script written to: {bindcraft_run_file}")
     os.chmod(bindcraft_run_file, 0o755)
     with bindcraft_launch_box:
-        print(f"Script written to {bindcraft_run_file}.")
-    
+        #print(f"Script written to {bindcraft_run_file}.")
+        logger.info(f"Script written to {bindcraft_run_file}.")
+
 def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     """Run the updated BindCraft run file, unless in DEV mode."""
     with bindcraft_launch_box:
-        print(f"[DEBUG] run_bindcraft() triggered with: {bindcraft_run_file}")
-        logging.debug(f"run_bindcraft() triggered with: {bindcraft_run_file}")
+        #print(f"run_bindcraft() triggered with: {bindcraft_run_file}")
+        logger.info(f"run_bindcraft() triggered with: {bindcraft_run_file}")
     from settings import ENV  # Import here if ENV isn't global
 
     if ENV == 'DEV':
         with bindcraft_launch_box:
-            print("[DEV MODE] Not running BindCraft — skipping actual execution.")
-            logging.debug("Skipping BindCraft execution in DEV mode.")
+            #print("[DEV MODE] Not running BindCraft — skipping actual execution.")
+            logger.debug("Skipping BindCraft execution in DEV mode.")
         return
 
     if not bindcraft_run_file or not os.path.exists(bindcraft_run_file):
         with bindcraft_launch_box:
-            print(f"[ERROR] BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
-            logging.debug(f"BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
+            #print(f"[ERROR] BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
+            logger.error(f"BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
         return
 
     with bindcraft_launch_box:
-        print(f"Running BindCraft with script: {bindcraft_run_file}")
-    logging.debug(f"Running BindCraft with script: {bindcraft_run_file}")
+        #print(f"Running BindCraft with script: {bindcraft_run_file}")
+        logger.info(f"Running BindCraft with script: {bindcraft_run_file}")
     
     try:
         subprocess.run(["bash", bindcraft_run_file], check=True)
     except subprocess.CalledProcessError as e:
         with bindcraft_launch_box:
-            print(f"[ERROR] BindCraft failed: {e}")
-        logging.error(f"BindCraft failed: {e}")
-
+            #print(f"[ERROR] BindCraft failed: {e}")
+            logger.exception(f"BindCraft run launch failed: {e}")
 
 def main_launch_bindcraft_UI(
     json_target_path: str,
