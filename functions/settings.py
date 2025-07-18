@@ -1,4 +1,3 @@
-ENV='DEV'
 SETTINGS = {
     # Production
     'PROD_RUN_DIR': '/workspace',
