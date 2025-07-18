@@ -1,3 +1,5 @@
+ENV = 'DEV'  # Change to 'PROD' for development settings
+#ENV = 'PROD'  # Change to 'DEV' for development settings
 SETTINGS = {
     # Production
     'PROD_RUN_DIR': '/workspace',
