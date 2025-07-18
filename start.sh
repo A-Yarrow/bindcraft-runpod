@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# Redirect all output to both the terminal (RunPod logs) and log file
+# Logging setup
 LOG_FILE="/workspace/startup.log"
-
-exec > >(awk '{ print strftime("[%Y-%m-%d %H:%M:%S]"), $0; fflush() }' | tee -a "$LOG_FILE") 2>&1
 chmod 644 "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "=== [STARTUP] $(date) ==="
 echo "Log output redirected to $LOG_FILE"
@@ -25,13 +24,11 @@ ALPHAFOLD_WEIGHTS_FILE="$BINDCRAFT_DIR/params/params_model_5_ptm.npz"
 
 JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
-JUPYTER_TOKEN=""
-JUPYTER_PASSWORD=""
 
 # Environment Setup
 
 cd "$BINDCRAFT_DIR" || {
-  echo "[FAIL] Cannot change to $BINDCRAFT_DIR" | tee -a "$STATUS_FILE"
+  echo "[FAIL] Cannot change to $BINDCRAFT_DIR" 
   exit 1
 }
 
@@ -169,9 +166,10 @@ jupyter lab $START_NOTEBOOK \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
-  --NotebookApp.token="$JUPYTER_TOKEN" \
-  --NotebookApp.password="$JUPYTER_PASSWORD" || {
+  --NotebookApp.token='' \
+  --NotebookApp.password='' \
+  --no-browser || {
     echo "[FAIL] Failed to launch JupyterLab" | tee -a "$STATUS_FILE"
-  }
+}
 
 echo "=== [FINISHED] Startup complete: $(date) ==="

@@ -45,6 +45,43 @@ selected_json_target_path_widget = widgets.Text(
     layout=widgets.Layout(width='80%')
 )
 
+
+def upload_and_save_file(save_directory: str=BASE_PATH, description: str = "Upload File", filetypes: str = ''):
+    """
+    Creates a file upload widget and saves the uploaded file to the specified directory.
+
+    Parameters:
+        save_directory (str): Directory to save the uploaded file.
+        description (str): Description shown next to the upload button.
+        filetypes (str): Accepted file extensions (e.g. '.pdb,.json').
+
+    Returns:
+        widgets.FileUpload: The file upload widget instance.
+    """
+    uploader = widgets.FileUpload(
+        accept=filetypes,
+        multiple=False,
+        description=description
+    )
+    display(uploader)
+
+    def handle_upload(change):
+        if not uploader.value:
+            print("No file uploaded.")
+            return
+            
+        for file_info in uploader.value.values():
+            filename = file_info['metadata']['name']
+            content = file_info['content']
+            save_path = os.path.join(save_directory, filename)
+            with open(save_path, 'wb') as f:
+                f.write(content)   
+            print(f"File saved to: {save_path}")
+
+    uploader.observe(handle_upload, names='value')
+    return uploader
+
+
 def launch_all_ui():
     """
     Launch the target editor, then the BindCraft UI.
@@ -64,3 +101,12 @@ def launch_all_ui():
         bindcraft_template_run_file=BINDCRAFT_TEMPLATE_PATH,
         output_dir=BASE_PATH
     )
+    print("Optional: Upload a JSON file to your settings_target directory.")
+    upload_and_save_file(
+    save_directory=f'{BASE_PATH}/settings_target',
+    description="Upload JSON",
+    filetypes='.json'
+)
+    
+
+
