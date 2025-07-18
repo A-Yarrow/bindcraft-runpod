@@ -6,6 +6,16 @@ import ipywidgets as widgets
 from IPython.display import display
 from settings import ENV, SETTINGS  # 👈 import the centralized config
 
+
+
+# Load relevant settings from the dictionary
+BASE_PATH = SETTINGS[f'{ENV}_RUN_DIR']
+FUNCTIONS_PATH = SETTINGS[f'{ENV}_FUNCTIONS_PATH']
+SETTINGS_DIRS = SETTINGS[f'{ENV}_SETTINGS_DIRS']
+BINDCRAFT_TEMPLATE_PATH = SETTINGS[f'{ENV}_BINDCRAFT_TEMPLATE_PATH']
+BINDCRAFT_OUTPUT_PATH = SETTINGS[f'{ENV}_BINDCRAFT_OUTPUT_PATH']
+DEFAULT_TARGET_JSON = SETTINGS[f'{ENV}_DEFAULT_TARGET_JSON']
+
 # Logging configuration
 
 logger = logging.getLogger(__name__)
@@ -20,14 +30,6 @@ file_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
-
-# Load relevant settings from the dictionary
-BASE_PATH = SETTINGS[f'{ENV}_RUN_DIR']
-FUNCTIONS_PATH = SETTINGS[f'{ENV}_FUNCTIONS_PATH']
-SETTINGS_DIRS = SETTINGS[f'{ENV}_SETTINGS_DIRS']
-BINDCRAFT_TEMPLATE_PATH = SETTINGS[f'{ENV}_BINDCRAFT_TEMPLATE_PATH']
-BINDCRAFT_OUTPUT_PATH = SETTINGS[f'{ENV}_BINDCRAFT_OUTPUT_PATH']
-DEFAULT_TARGET_JSON = SETTINGS[f'{ENV}_DEFAULT_TARGET_JSON']
 
 # Add function path for custom imports
 sys.path.append(FUNCTIONS_PATH)
