@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display
-from settings import ENV, SETTINGS  # 👈 import the centralized config
+from settings import SETTINGS  # 👈 import the centralized config
 
 
 
