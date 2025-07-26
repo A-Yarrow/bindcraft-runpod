@@ -55,13 +55,11 @@ def on_submit_settings_clicked(button,
         selected_paths_holder['settings_target'] = json_target_path
     except KeyError:
         with bindcraft_launch_box:
-            #print("Please click the Submit button to select settings files.")
             logger.exception("KeyError: Missing one or more settings paths.")
         return
 
     if not filters_path or not advanced_path or not json_target_path:
         with bindcraft_launch_box:
-            #print("Missing required paths. Make sure all fields are selected.")
             logger.debug("Missing required paths in selected_paths_holder.")
         return
 
@@ -73,13 +71,15 @@ def on_submit_settings_clicked(button,
     with open(bindcraft_template_run_file, 'r') as f:
         template = Template(f.read())
 
+    TARGET_NAME = os.path.splitext(os.path.basename(json_target_path))[0]
+    LOG_DIR = f"{output_dir}/outputs/{TARGET_NAME}"
     new_template = template.substitute(
         FILTERS_FILE_PATH=filters_path,
         ADVANCED_FILE_PATH=advanced_path,
         TARGET_FILE_PATH=json_target_path,
         TARGET_FILE_NAME=os.path.basename(json_target_path),
-        TARGET_NAME=os.path.splitext(os.path.basename(json_target_path))[0],
-        LOG_DIR=f"{output_dir}/outputs/{os.path.splitext(os.path.basename(json_target_path))[0]}"
+        TARGET_NAME=TARGET_NAME,
+        LOG_DIR=LOG_DIR
     )
 
     bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')
@@ -88,37 +88,32 @@ def on_submit_settings_clicked(button,
         logger.debug(f"BindCraft run script written to: {bindcraft_run_file}")
     os.chmod(bindcraft_run_file, 0o755)
     with bindcraft_launch_box:
-        #print(f"Script written to {bindcraft_run_file}.")
         logger.info(f"Script written to {bindcraft_run_file}.")
+        logger.info(f"To tail log, run: tail -f {LOG_DIR}/{TARGET_NAME}-bindcraft_log.txt")
 
 def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     """Run the updated BindCraft run file, unless in DEV mode."""
     with bindcraft_launch_box:
-        #print(f"run_bindcraft() triggered with: {bindcraft_run_file}")
         logger.info(f"run_bindcraft() triggered with: {bindcraft_run_file}")
     from settings import ENV  # Import here if ENV isn't global
 
     if ENV == 'DEV':
         with bindcraft_launch_box:
-            #print("[DEV MODE] Not running BindCraft — skipping actual execution.")
             logger.debug("Skipping BindCraft execution in DEV mode.")
         return
 
     if not bindcraft_run_file or not os.path.exists(bindcraft_run_file):
         with bindcraft_launch_box:
-            #print(f"[ERROR] BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
             logger.error(f"BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
         return
 
     with bindcraft_launch_box:
-        #print(f"Running BindCraft with script: {bindcraft_run_file}")
         logger.info(f"Running BindCraft with script: {bindcraft_run_file}")
     
     try:
         subprocess.run(["bash", bindcraft_run_file], check=True)
     except subprocess.CalledProcessError as e:
         with bindcraft_launch_box:
-            #print(f"[ERROR] BindCraft failed: {e}")
             logger.exception(f"BindCraft run launch failed: {e}")
 
 def main_launch_bindcraft_UI(
