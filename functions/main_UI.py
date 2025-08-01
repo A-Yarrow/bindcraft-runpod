@@ -100,7 +100,7 @@ def upload_and_save_file(save_directory: str=BASE_PATH, description: str = "Uplo
                     with UI_OUTPUT_WIDGET:
                         print(f"File uploaded and saved as: {saved_path}")
                 selected_json_target_path_widget.value = saved_path
-                logger.info(f"File uploaded and saved as: {saved_path}")
+                #logger.info(f"File uploaded and saved as: {saved_path}")
             
             elif uploaded_file['name'].endswith('.pdb'):
                 with open(saved_path, 'wb') as f:
@@ -108,9 +108,9 @@ def upload_and_save_file(save_directory: str=BASE_PATH, description: str = "Uplo
                 uploaded_pdb_path = saved_path 
                 validate_pdb_file(uploaded_pdb_path)
 
-            logger.info(f"File uploaded: {saved_path}")
+            logger.info(f"File uploaded and saved as: {saved_path}")
             with UI_OUTPUT_WIDGET:
-                print(f"File uploaded: {saved_path}")
+                print(f"File uploaded and saved as: {saved_path}")
         
         
     uploader.observe(on_uploader_change, names='value')
@@ -138,13 +138,13 @@ def launch_all_ui():
 
     print("Step 1: Edit or Update your target JSON file.")
     main_launch_target_editor(
-        json_target_path=selected_json_target_path_widget.value.strip(),
+        json_target_path_widget=selected_json_target_path_widget,
         path_output_widget=selected_json_target_path_widget
     )
 
     print("\nStep 2: Select settings and run BindCraft.")
     main_launch_bindcraft_UI(
-        json_target_path=selected_json_target_path_widget.value.strip(),
+        json_target_path_widget=selected_json_target_path_widget,
         settings_dirs=SETTINGS_DIRS,
         base_path=BASE_PATH,
         bindcraft_template_run_file=BINDCRAFT_TEMPLATE_PATH,

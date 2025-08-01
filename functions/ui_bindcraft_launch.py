@@ -31,11 +31,15 @@ def settings_widget(dirs: list) -> dict:
 
 def on_submit_settings_clicked(button, 
                                base_path:str, 
-                               json_target_path:str, 
+                               json_target_path_widget:widgets.Text, 
                                bindcraft_template_run_file, 
                                output_dir:str, 
                                settings_widget_dict: dict) -> str:
     """Save selected paths from dropdowns to global holder."""
+    json_target_path = json_target_path_widget.value.strip()
+    with bindcraft_launch_box:
+        logger.info(f'Json path set to:{json_target_path}')
+
     selected_paths = {os.path.basename(k): dd.value for k, dd in settings_widget_dict.items()}
     selected_paths_holder.clear()
     selected_paths_holder.update(selected_paths)
@@ -117,7 +121,7 @@ def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
             logger.exception(f"BindCraft run launch failed: {e}")
 
 def main_launch_bindcraft_UI(
-    json_target_path: str,
+    json_target_path_widget: widgets.Text,
     settings_dirs: list,
     base_path: str,
     bindcraft_template_run_file: str,
@@ -134,7 +138,7 @@ def main_launch_bindcraft_UI(
 
     submit_settings_button.on_click(partial(on_submit_settings_clicked,
         base_path=base_path,
-        json_target_path=json_target_path,
+        json_target_path_widget=json_target_path_widget,
         bindcraft_template_run_file=bindcraft_template_run_file,
         output_dir=output_dir,
         settings_widget_dict=settings_widget_dict

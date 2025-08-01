@@ -21,9 +21,6 @@ def save_target_json(target_folder, filename, json_target_path, data):
     os.makedirs(target_filepath, exist_ok=True)
     full_path = os.path.join(target_filepath, filename)
 
-    with editor_output_box: 
-        #print(f"[DEBUG] Writing file to: {full_path}")
-        logger.info(f"Writing file to: {full_path}")
     with open(full_path, 'w') as f:
         json.dump(data, f, indent=4)
     with editor_output_box:
@@ -53,7 +50,7 @@ def on_save_clicked(button,
                     path_output_widget):
     with editor_output_box:
         #print(f'Save button clicked with json_target_path: {json_target_path}')
-        logger.info(f'Save button clicked with json_target_path: {json_target_path}')
+        #logger.info(f'Save button clicked with json_target_path: {json_target_path}')
     target_folder = target_folder_widget.value.strip()
     filename = filename_widget.value.strip()
     updated_data = update_data(data, widget_dict)
@@ -61,7 +58,10 @@ def on_save_clicked(button,
     
     with editor_output_box:
         #print(f"Saved parameters to {filename} in folder {target_folder}")
-        logger.info(f"Saved parameters to {filename} in folder {target_folder}")
+        if target_folder:
+            logger.info(f"Saved parameters to {filename} in folder {target_folder}")
+        else:
+            logger.info(f"Saved parameters to {filename}")
     new_path = os.path.join(
     os.path.dirname(json_target_path),
     target_folder,
@@ -83,10 +83,11 @@ def target_editor_widget(data):
                                           style={'description_width': 'initial'})
     return widget_dict
 
-def main_launch_target_editor(json_target_path: str, path_output_widget: widgets.Text) -> None:
+def main_launch_target_editor(json_target_path_widget: widgets.Text, path_output_widget: widgets.Text) -> None:
     """
     Launch the target editor UI to edit a JSON file.
     """
+    json_target_path = json_target_path_widget.value.strip()
     data = load_target_json(json_target_path)
 
     target_folder_widget = widgets.Text(
