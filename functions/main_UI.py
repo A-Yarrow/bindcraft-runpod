@@ -7,6 +7,7 @@ from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display
 from settings import ENV, SETTINGS  # 👈 import the centralized config
+from typing import Callable, Optional
 
 # Load relevant settings from the dictionary
 BASE_PATH = SETTINGS[f'{ENV}_RUN_DIR']
@@ -40,6 +41,7 @@ from ui_target_editor import main_launch_target_editor
 from ui_bindcraft_launch import main_launch_bindcraft_UI
 
 # Shared widget that gets updated between steps
+target_editor_container = widgets.VBox()
 selected_json_target_path_widget = widgets.Text(
     value=DEFAULT_TARGET_JSON,
     description='Target JSON:',
@@ -47,7 +49,9 @@ selected_json_target_path_widget = widgets.Text(
     layout=widgets.Layout(width='80%')
 )
 
-UI_OUTPUT_WIDGET = widgets.Output()
+PDB_UI_OUTPUT_WIDGET = widgets.Output()
+JSON_UI_OUTPUT_WIDGET = widgets.Output()
+
 uploaded_pdb_path = None
 
 def validate_pdb_file(pdb_path: str) -> bool:
@@ -58,24 +62,30 @@ def validate_pdb_file(pdb_path: str) -> bool:
     parser = PDBParser(QUIET=False)
     try:
         structure = parser.get_structure('temp', pdb_path)
-        with UI_OUTPUT_WIDGET:
-            print(f"Valid PDB file: {pdb_path}")
-        logger.info(f"Valid PDB file: {pdb_path}")
+        with PDB_UI_OUTPUT_WIDGET:
+            print(f"Validated PDB Saved to: {pdb_path}")
+        logger.info(f"Validated PDB file saved to: {pdb_path}")
         return True
     
     except PDBConstructionException as e:
-        with UI_OUTPUT_WIDGET:
+        with PDB_UI_OUTPUT_WIDGET:
             print(f"Invalid PDB file: {e}")
         logger.error(f"Invalid PDB file: {e}")
         return False    
     
     except Exception  as e:
-        with UI_OUTPUT_WIDGET:
+        with PDB_UI_OUTPUT_WIDGET:
             print(f"Invalid PDB file: {e}")
         logger.error(f"Invalid PDB file: {e}")
         return False    
 
-def upload_and_save_file(save_directory: str=BASE_PATH, description: str = "Upload File", filetypes: str = ''):
+def upload_and_save_file(
+    save_directory: str=BASE_PATH, 
+    description: str = "Upload File", 
+    filetypes: str = '',
+    on_success: Optional[Callable[[str], None]] = None
+
+    ):
     """
     Creates a file upload widget and saves the uploaded file to the specified directory.
     Returns:
@@ -97,52 +107,80 @@ def upload_and_save_file(save_directory: str=BASE_PATH, description: str = "Uplo
             if uploaded_file['name'].endswith('.json'):
                 with open(saved_path, 'wb') as f:
                     f.write(bytes(uploaded_file['content']))
-                    with UI_OUTPUT_WIDGET:
+                    with JSON_UI_OUTPUT_WIDGET:
                         print(f"File uploaded and saved as: {saved_path}")
                 selected_json_target_path_widget.value = saved_path
                 #logger.info(f"File uploaded and saved as: {saved_path}")
-            
-            elif uploaded_file['name'].endswith('.pdb'):
-                with open(saved_path, 'wb') as f:
-                    f.write(uploaded_file['content'])
-                uploaded_pdb_path = saved_path 
-                validate_pdb_file(uploaded_pdb_path)
+                if on_success:
+                    with JSON_UI_OUTPUT_WIDGET:
+                        print("....Updating Json Fields")
+                    on_success(saved_path)
+                return
 
-            logger.info(f"File uploaded and saved as: {saved_path}")
-            with UI_OUTPUT_WIDGET:
-                print(f"File uploaded and saved as: {saved_path}")
-        
+            elif uploaded_file['name'].endswith('.pdb'):
+                name = uploaded_file['name']
+                pdb_path = os.path.join(BASE_PATH, 'inputs', name)
+                os.makedirs(os.path.dirname(pdb_path), exist_ok=True)
+                
+                with open(pdb_path, 'wb') as f:
+                    f.write(uploaded_file['content'])
+                validate_pdb_file(pdb_path)
+                return
         
     uploader.observe(on_uploader_change, names='value')
     display(uploader)
     return uploader
+
+def refresh_target_editor(new_json_path):
+    selected_json_target_path_widget.value = new_json_path
+
+    # Launch a fresh editor UI into the container
+    editor_ui = main_launch_target_editor(
+        json_target_path = new_json_path,
+        path_output_widget = selected_json_target_path_widget
+    )
+    target_editor_container.children = [editor_ui]
+    with JSON_UI_OUTPUT_WIDGET:
+        print(f"Refreshed UI with: {new_json_path}")
 
 def launch_all_ui():
     """
     Launch the target editor, then the BindCraft UI.
     The JSON path widget is updated after save and passed into BindCraft launcher.
     """
+    global target_editor_container
+
+    print("Step 1: Upload, edit or create a new target JSON file.")
     print("Optional: Upload a JSON file to your settings_target directory.")
     upload_and_save_file(
-    save_directory=f'{BASE_PATH}/settings_target',
-    description="Upload JSON",
-    filetypes='.json'
-)
-    print("Optional: Upload a PDB file to your settings_target directory.")
-    upload_and_save_file(
-    save_directory=f'{BASE_PATH}/inputs',
-    description="Upload PDB",
-    filetypes='.pdb'
+        save_directory=f'{BASE_PATH}/settings_target',
+        description="Upload JSON",
+        filetypes='.json',
+        on_success = refresh_target_editor
 )   
-    display(UI_OUTPUT_WIDGET)
+    display(JSON_UI_OUTPUT_WIDGET)
 
-    print("Step 1: Edit or Update your target JSON file.")
-    main_launch_target_editor(
-        json_target_path_widget=selected_json_target_path_widget,
-        path_output_widget=selected_json_target_path_widget
-    )
+    #Load the default target json at startup
+    print("If needed, edit or create a new target JSON file.")
+    refresh_target_editor(DEFAULT_TARGET_JSON)
+    display(target_editor_container)
 
-    print("\nStep 2: Select settings and run BindCraft.")
+    #print(f"Loading editor for: {selected_json_target_path_widget.value}")
+    #main_launch_target_editor(
+    #    json_target_path_widget=selected_json_target_path_widget,
+    #    path_output_widget=selected_json_target_path_widget
+    #)
+    
+    print(f"\nStep 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory.")
+    
+    upload_and_save_file(
+        save_directory=f'{BASE_PATH}/inputs',
+        description="Upload PDB",
+        filetypes='.pdb'
+)   
+    display(PDB_UI_OUTPUT_WIDGET)
+
+    print("\nStep 3: Select settings and run BindCraft.")
     main_launch_bindcraft_UI(
         json_target_path_widget=selected_json_target_path_widget,
         settings_dirs=SETTINGS_DIRS,
@@ -150,5 +188,5 @@ def launch_all_ui():
         bindcraft_template_run_file=BINDCRAFT_TEMPLATE_PATH,
         output_dir=BASE_PATH
     )
-    
+
 
