@@ -15,9 +15,9 @@ def load_target_json(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
-def save_target_json(target_folder, filename, json_target_path, data):
+def save_target_json(filename, json_target_path, data):
     base_dir = os.path.dirname(json_target_path)
-    target_filepath = os.path.join(base_dir, target_folder)
+    target_filepath = os.path.join(base_dir)
     os.makedirs(target_filepath, exist_ok=True)
     full_path = os.path.join(target_filepath, filename)
 
@@ -44,31 +44,23 @@ def update_data(data, widget_dict):
 
 def on_save_clicked(button, 
                     data, widget_dict, 
-                    target_folder_widget, 
                     filename_widget, 
                     json_target_path,
                     path_output_widget):
     
-    target_folder = target_folder_widget.value.strip()
     filename = filename_widget.value.strip()
     updated_data = update_data(data, widget_dict)
-    save_target_json(target_folder, filename, json_target_path, updated_data)
+    save_target_json(filename, json_target_path, updated_data)
     
-    new_path = os.path.join(
-    os.path.dirname(json_target_path),
-    target_folder,
-    filename
-    )
+    new_path = os.path.join(os.path.dirname(json_target_path),filename)
     path_output_widget.value = new_path 
 
 def on_use_json_clicked(button, 
                     data, widget_dict, 
-                    target_folder_widget, 
                     filename_widget, 
                     json_target_path,
                     path_output_widget):
     path_output_widget.value = os.path.join(os.path.dirname(json_target_path),
-    target_folder_widget.value.strip() if target_folder_widget.value.strip() else '',
     filename_widget.value.strip()
     )
     with editor_output_box:
@@ -95,12 +87,6 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
     """
     data = load_target_json(json_target_path)
 
-    target_folder_widget = widgets.Text(
-        value=Path(json_target_path).stem,
-        description='Subfolder to save json file to (optional):',
-        style={'description_width': 'initial'}
-    )
-
     filename_widget = widgets.Text(
         value=os.path.basename(json_target_path),
         description='File Name:',
@@ -116,7 +102,6 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
         on_save_clicked,
         data=data,
         widget_dict=widget_dict,
-        target_folder_widget=target_folder_widget,
         filename_widget=filename_widget,
         json_target_path=json_target_path,
         path_output_widget=path_output_widget
@@ -126,12 +111,11 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
         on_save_clicked,
         data=data,
         widget_dict=widget_dict,
-        target_folder_widget=target_folder_widget,
         filename_widget=filename_widget,
         json_target_path=json_target_path,
         path_output_widget=path_output_widget
     ))
     
-    all_widgets = [filename_widget, target_folder_widget] + list(widget_dict.values()) + [save_button, use_json_button, editor_output_box]
+    all_widgets = [filename_widget] + list(widget_dict.values()) + [save_button, use_json_button, editor_output_box]
     return widgets.VBox(all_widgets)
      

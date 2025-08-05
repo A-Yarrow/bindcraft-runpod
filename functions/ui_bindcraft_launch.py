@@ -13,6 +13,7 @@ selected_paths_holder = {}
 
 bindcraft_launch_box = widgets.Output()
 
+
 def settings_widget(dirs: list) -> dict:
     """Build dropdown widgets for JSON settings files in specified directories."""
     settings_widget_dict = {}
@@ -28,15 +29,17 @@ def settings_widget(dirs: list) -> dict:
         settings_widget_dict[d] = file_dropdown
     return settings_widget_dict
 
-
 def on_submit_settings_clicked(button, 
                                base_path:str, 
                                json_target_path_widget:widgets.Text, 
                                bindcraft_template_run_file, 
                                output_dir:str, 
-                               settings_widget_dict: dict) -> str:
-    """Save selected paths from dropdowns to global holder."""
-    json_target_path = json_target_path_widget.value.strip()
+                               settings_widget_dict: dict,
+                               json_target_dropdown: widgets.Dropdown = None) -> str:
+    
+    # Use dropdown if selected (widget is not none and contains a value), else use text widget
+    json_target_path = json_target_dropdown.value.strip() if json_target_dropdown and json_target_dropdown.value else json_target_path_widget.value.strip()
+
     with bindcraft_launch_box:
         logger.info(f'Json path set to:{json_target_path}')
 
@@ -126,10 +129,30 @@ def main_launch_bindcraft_UI(
     base_path: str,
     bindcraft_template_run_file: str,
     output_dir: str):
+
+    def refresh_dropdowns(b):
+        for directory, widget in settings_widget_dict.items():
+            file_list = sorted(glob(f'{directory}/*.json'))
+            filenames = [os.path.basename(file) for file in file_list]
+            widget.options = filenames  # dynamically update options
     
     """Main UI to select settings and run BindCraft."""
     settings_widget_dict = settings_widget(settings_dirs)
     
+    """Json target dropdwon widget"""
+    json_target_dropdown = widgets.Dropdown(
+    options=sorted(glob(f'{base_path}/settings_target/*.json')),
+    description='Or Select JSON:',
+    style={'description_width': 'initial'},
+    layout=widgets.Layout(width='70%')
+    )
+    refresh_button = widgets.Button(
+    description="🔄 Refresh Dropdowns",
+    button_style='warning',
+    layout=widgets.Layout(width='30%')
+    )
+    
+    refresh_button.on_click(refresh_dropdowns)
     submit_settings_button = widgets.Button(
         description='Generate BindCraft Run Script with Settings',
         button_style='success',
@@ -141,7 +164,8 @@ def main_launch_bindcraft_UI(
         json_target_path_widget=json_target_path_widget,
         bindcraft_template_run_file=bindcraft_template_run_file,
         output_dir=output_dir,
-        settings_widget_dict=settings_widget_dict
+        settings_widget_dict=settings_widget_dict,
+        json_target_dropdown=json_target_dropdown
     ))
 
     run_bindcraft_button = widgets.Button(
@@ -154,9 +178,13 @@ def main_launch_bindcraft_UI(
         partial(run_bindcraft,
         bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')))
     
+    display(json_target_dropdown)
+    
+    display(refresh_button)
+
     for directory, widget in settings_widget_dict.items():
         display(widget)
-
+    
     display(submit_settings_button)
     display(run_bindcraft_button)
     display(bindcraft_launch_box)

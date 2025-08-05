@@ -148,8 +148,7 @@ def refresh_target_editor(new_json_path):
         path_output_widget = selected_json_target_path_widget
     )
     target_editor_container.children = [editor_ui]
-    with JSON_UI_OUTPUT_WIDGET:
-        print(f"Refreshed UI with: {new_json_path}")
+
 
 def launch_all_ui():
     """
@@ -160,11 +159,11 @@ def launch_all_ui():
 
     display(step_box("""
         <strong>Step 1:</strong> Upload, edit, or create a new target JSON file.<br>
-        There are three ways to use the JSON file:<br><br>
+        There are three ways to provide the JSON file:<br><br>
         a. Upload your own JSON file. It will populate the fields below.<br>
         &nbsp;&nbsp;&nbsp;&nbsp;This will automatically be used when you run BindCraft.<br>
         b. Edit the default JSON file or the one you uploaded in the fields below.<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;If you make changes, be sure to Save and click <em>'Use This JSON File'</em><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;If you make changes, be sure to save and click <em>'Use This JSON File'</em><br>
         c. Select a JSON file from the dropdown below — this will override all previous selections.
     """))
 
@@ -183,13 +182,6 @@ def launch_all_ui():
     refresh_target_editor(DEFAULT_TARGET_JSON)
     display(target_editor_container)
 
-    #print(f"Loading editor for: {selected_json_target_path_widget.value}")
-    #main_launch_target_editor(
-    #    json_target_path_widget=selected_json_target_path_widget,
-    #    path_output_widget=selected_json_target_path_widget
-    #)
-    
-    #print(f"\nStep 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory.")
     display(step_box(f"Step 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
     
     upload_and_save_file(
