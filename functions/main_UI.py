@@ -52,8 +52,16 @@ selected_json_target_path_widget = widgets.Text(
 PDB_UI_OUTPUT_WIDGET = widgets.Output()
 JSON_UI_OUTPUT_WIDGET = widgets.Output()
 
-uploaded_pdb_path = None
+import ipywidgets as widgets
+from IPython.display import display
 
+def step_box(text, font_size='16px'):
+    return widgets.HTML(
+        value=f"<div style='padding: 8px; background-color: #eef; font-size: {font_size}; border: 1px solid #ccd; border-radius: 6px;'><strong>{text}</strong></div>"
+    )
+
+
+uploaded_pdb_path = None
 def validate_pdb_file(pdb_path: str) -> bool:
     """
     Validate if the provided PDB file is valid.
@@ -63,8 +71,8 @@ def validate_pdb_file(pdb_path: str) -> bool:
     try:
         structure = parser.get_structure('temp', pdb_path)
         with PDB_UI_OUTPUT_WIDGET:
-            print(f"Validated PDB Saved to: {pdb_path}")
-        logger.info(f"Validated PDB file saved to: {pdb_path}")
+            print(f"PDB validated and saved to: {pdb_path}")
+        logger.info(f"PDB validated and file saved to: {pdb_path}")
         return True
     
     except PDBConstructionException as e:
@@ -150,8 +158,18 @@ def launch_all_ui():
     """
     global target_editor_container
 
-    print("Step 1: Upload, edit or create a new target JSON file.")
-    print("Optional: Upload a JSON file to your settings_target directory.")
+    display(step_box("""
+        <strong>Step 1:</strong> Upload, edit, or create a new target JSON file.<br>
+        There are three ways to use the JSON file:<br><br>
+        a. Upload your own JSON file. It will populate the fields below.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;This will automatically be used when you run BindCraft.<br>
+        b. Edit the default JSON file or the one you uploaded in the fields below.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;If you make changes, be sure to Save and click <em>'Use This JSON File'</em><br>
+        c. Select a JSON file from the dropdown below — this will override all previous selections.
+    """))
+
+    display(step_box("Step 1a: Upload a new target JSON file"))
+    #print("Optional: Upload a JSON file to your settings_target directory.")
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/settings_target',
         description="Upload JSON",
@@ -161,7 +179,7 @@ def launch_all_ui():
     display(JSON_UI_OUTPUT_WIDGET)
 
     #Load the default target json at startup
-    print("If needed, edit or create a new target JSON file.")
+    display(step_box("Step 1b: If needed, edit or create a new target JSON file."))
     refresh_target_editor(DEFAULT_TARGET_JSON)
     display(target_editor_container)
 
@@ -171,7 +189,8 @@ def launch_all_ui():
     #    path_output_widget=selected_json_target_path_widget
     #)
     
-    print(f"\nStep 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory.")
+    #print(f"\nStep 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory.")
+    display(step_box(f"Step 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
     
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/inputs',
@@ -180,7 +199,7 @@ def launch_all_ui():
 )   
     display(PDB_UI_OUTPUT_WIDGET)
 
-    print("\nStep 3: Select settings and run BindCraft.")
+    display(step_box("Step 3: Select your settings files and run BindCraft"))
     main_launch_bindcraft_UI(
         json_target_path_widget=selected_json_target_path_widget,
         settings_dirs=SETTINGS_DIRS,

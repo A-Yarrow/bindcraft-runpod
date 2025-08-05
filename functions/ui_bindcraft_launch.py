@@ -154,8 +154,6 @@ def main_launch_bindcraft_UI(
         partial(run_bindcraft,
         bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')))
     
-
-    print("Select your settings files:")
     for directory, widget in settings_widget_dict.items():
         display(widget)
 
