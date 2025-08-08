@@ -9,6 +9,10 @@ SETTINGS = {
         '/workspace/settings_filters',
         '/workspace/settings_advanced'
     ],
+    #Default values
+    'PROD_DEFAULT_SETTINGS_FILTER':'default_filters.json',
+    'PROD_DEFAULT_SETTINGS_ADVANCED':'default_4stage_multimer.json',
+
     'PROD_BINDCRAFT_TEMPLATE_PATH': '/app/bindcraft/bindcraft_run_template.sh',
     'PROD_BINDCRAFT_OUTPUT_PATH': '/workspace/bindcraft_run.sh',
     'PROD_FUNCTIONS_PATH': '/app/bindcraft/functions',
@@ -22,6 +26,10 @@ SETTINGS = {
         '/home/yarrow/projects/bindcraft-runpod/settings_filters',
         '/home/yarrow/projects/bindcraft-runpod/settings_advanced'
     ],
+    #Default values
+    'DEV_DEFAULT_SETTINGS_FILTER':'default_filters.json',
+    'DEV_DEFAULT_SETTINGS_ADVANCED':'default_4stage_multimer.json',
+    
     'DEV_BINDCRAFT_TEMPLATE_PATH': '/home/yarrow/projects/bindcraft-runpod/bindcraft_run_template.sh',
     'DEV_BINDCRAFT_OUTPUT_PATH': '/home/yarrow/projects/bindcraft-runpod/bindcraft_run.sh',
     'DEV_FUNCTIONS_PATH': '/home/yarrow/projects/bindcraft-runpod/functions',

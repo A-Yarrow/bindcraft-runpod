@@ -55,14 +55,6 @@ def on_save_clicked(button,
     new_path = os.path.join(os.path.dirname(json_target_path),filename)
     path_output_widget.value = new_path 
 
-def on_use_json_clicked(button, 
-                    data, widget_dict, 
-                    filename_widget, 
-                    json_target_path,
-                    path_output_widget):
-    path_output_widget.value = os.path.join(os.path.dirname(json_target_path),
-    filename_widget.value.strip()
-    )
     with editor_output_box:
         print(f"Using JSON file: {path_output_widget.value}")
     logger.info(f"Using JSON file: {path_output_widget.value}")
@@ -96,7 +88,7 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
     widget_dict = target_editor_widget(data)
 
     save_button = widgets.Button(description="Save Changes", button_style='success')
-    use_json_button = widgets.Button(description="Use This JSON File", button_style='info')
+    
     
     save_button.on_click(partial(
         on_save_clicked,
@@ -106,16 +98,8 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
         json_target_path=json_target_path,
         path_output_widget=path_output_widget
     ))
+
     
-    use_json_button.on_click(partial(
-        on_save_clicked,
-        data=data,
-        widget_dict=widget_dict,
-        filename_widget=filename_widget,
-        json_target_path=json_target_path,
-        path_output_widget=path_output_widget
-    ))
-    
-    all_widgets = [filename_widget] + list(widget_dict.values()) + [save_button, use_json_button, editor_output_box]
+    all_widgets = [filename_widget] + list(widget_dict.values()) + [save_button, editor_output_box]
     return widgets.VBox(all_widgets)
      

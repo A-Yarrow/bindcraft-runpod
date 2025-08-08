@@ -158,17 +158,33 @@ def launch_all_ui():
     global target_editor_container
 
     display(step_box("""
-        <strong>Step 1:</strong> Upload, edit, or create a new target JSON file.<br>
-        There are three ways to provide the JSON file:<br><br>
-        a. Upload your own JSON file. It will populate the fields below.<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;This will automatically be used when you run BindCraft.<br>
-        b. Edit the default JSON file or the one you uploaded in the fields below.<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;If you make changes, be sure to save and click <em>'Use This JSON File'</em><br>
-        c. Select a JSON file from the dropdown below — this will override all previous selections.
-    """))
+        <strong>Welcome to the BindCraft User Interface</strong><br><br>
+        There are three basic steps to running Bindcraft:<br>
+        1. Select a target JSON file.<br>
+        2. Select a <em>settings filters</em> file (<code>settings_filters.json</code>) — this determines the filters used when selecting binding candidates.<br>
+        3. Select an <em>advanced settings</em> file (<code>settings_advanced.json</code>).<br><br>
 
-    display(step_box("Step 1a: Upload a new target JSON file"))
-    #print("Optional: Upload a JSON file to your settings_target directory.")
+        The default JSON files are a good place to start.<br>
+        To learn more, I encourage you to check out the BindCraft repo README:
+        <a href="https://github.com/martinpacesa/BindCraft" target="_blank">GitHub Repo</a><br>
+        as well as the wiki:
+        <a href="https://github.com/martinpacesa/BindCraft/wiki/De-novo-binder-design-with-BindCraft" target="_blank">BindCraft Wiki</a><br><br>
+
+        <strong>The Target JSON file</strong> is the high-level director for the Bindcraft run.<br>
+
+        This is where you can enter:<br>
+        1. <strong>File Name</strong> — Name of your JSON file.<br>
+        2. <strong>Design Path</strong> — Directory to place designs.<br>
+        3. <strong>Binder Name</strong> — Prefix for your output files.<br>
+        4. <strong>Starting PDB</strong> — Path to your target PDB file (for Runpod, it will always be in <code>/workspace/inputs</code>).<br>
+        5. <strong>Chain</strong> — The chain from the input PDB that you wish to design binders to.<br>
+        6. <strong>Target Hotspot Residues</strong> — Area of focus in your PDB (not strictly enforced — Bindcraft may design outside these if metrics are much more favorable).<br>
+        7. <strong>Lengths</strong> — Range of amino acid lengths for the designed binders.<br>
+        8. <strong>Number of Final Designs</strong> — Number of output binders that pass filters.<br>
+        """))
+        
+    display(step_box("<strong>Step 1:</strong> Optional: Upload a JSON file to your settings_target directory"))
+    
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/settings_target',
         description="Upload JSON",
@@ -178,11 +194,11 @@ def launch_all_ui():
     display(JSON_UI_OUTPUT_WIDGET)
 
     #Load the default target json at startup
-    display(step_box("Step 1b: If needed, edit or create a new target JSON file."))
+    display(step_box("Optional: If needed, edit or create a new target JSON file."))
     refresh_target_editor(DEFAULT_TARGET_JSON)
     display(target_editor_container)
 
-    display(step_box(f"Step 2: If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
+    display(step_box(f"<strong> Step 2:</strong> If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
     
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/inputs',

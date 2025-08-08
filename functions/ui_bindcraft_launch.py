@@ -6,11 +6,18 @@ from string import Template
 import ipywidgets as widgets
 from IPython.display import display
 from functools import partial
-from settings import ENV
+from settings import ENV, SETTINGS
 from main_UI import logger
+
+# SETTINGS
+DEFAULT_SETTINGS_FILTER = os.path.join(SETTINGS[f'{ENV}_SETTINGS_DIRS'][0], 
+SETTINGS[f'{ENV}_DEFAULT_SETTINGS_FILTER'])
+DEFAULT_SETTINGS_ADVANCED = os.path.join(SETTINGS[f'{ENV}_SETTINGS_DIRS'][1], 
+SETTINGS[f'{ENV}_DEFAULT_SETTINGS_ADVANCED'])
+
 # GLOBAL HOLDERS
 selected_paths_holder = {}
-
+refresh_dropdown_output_box = widgets.Output()
 bindcraft_launch_box = widgets.Output()
 
 
@@ -27,6 +34,11 @@ def settings_widget(dirs: list) -> dict:
             layout=widgets.Layout(width='50%')
         )
         settings_widget_dict[d] = file_dropdown
+    
+    #Set defaults
+    settings_widget_dict[SETTINGS[f'{ENV}_SETTINGS_DIRS'][0]].value = os.path.basename(DEFAULT_SETTINGS_FILTER)
+    settings_widget_dict[SETTINGS[f'{ENV}_SETTINGS_DIRS'][1]].value = os.path.basename(DEFAULT_SETTINGS_ADVANCED)
+    
     return settings_widget_dict
 
 def on_submit_settings_clicked(button, 
@@ -131,10 +143,12 @@ def main_launch_bindcraft_UI(
     output_dir: str):
 
     def refresh_dropdowns(b):
-        for directory, widget in settings_widget_dict.items():
-            file_list = sorted(glob(f'{directory}/*.json'))
-            filenames = [os.path.basename(file) for file in file_list]
-            widget.options = filenames  # dynamically update options
+        with refresh_dropdown_output_box:
+            print("Refresh clicked")
+        target_files = sorted(glob(f'{base_path}/settings/*.json'))
+        with refresh_dropdown_output_box:
+            print(f"Updating {directory} dropdown options to: {filenames}")
+        json_target_dropdown.options = [os.path.basename(f) for f in target_files]
     
     """Main UI to select settings and run BindCraft."""
     settings_widget_dict = settings_widget(settings_dirs)
@@ -142,17 +156,19 @@ def main_launch_bindcraft_UI(
     """Json target dropdwon widget"""
     json_target_dropdown = widgets.Dropdown(
     options=sorted(glob(f'{base_path}/settings_target/*.json')),
-    description='Or Select JSON:',
+    description='Select Target JSON:',
     style={'description_width': 'initial'},
     layout=widgets.Layout(width='70%')
     )
     refresh_button = widgets.Button(
-    description="🔄 Refresh Dropdowns",
+    description="🔄 Refresh Json Dropdown Menu",
     button_style='warning',
     layout=widgets.Layout(width='30%')
     )
     
     refresh_button.on_click(refresh_dropdowns)
+    #print(f"Refreshing dropdown for {directory} - found files: {filenames}")
+
     submit_settings_button = widgets.Button(
         description='Generate BindCraft Run Script with Settings',
         button_style='success',
@@ -181,7 +197,8 @@ def main_launch_bindcraft_UI(
     display(json_target_dropdown)
     
     display(refresh_button)
-
+    display(refresh_dropdown_output_box)
+    display(widgets.Label("Remember to click 'Refresh Json Dropdown' after uploading, editing or saving a new Target Json file"))
     for directory, widget in settings_widget_dict.items():
         display(widget)
     
