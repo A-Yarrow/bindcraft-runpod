@@ -8,6 +8,9 @@ from IPython.display import display
 from functools import partial
 from settings import ENV, SETTINGS
 from main_UI import logger
+import threading
+import time
+
 
 # SETTINGS
 DEFAULT_SETTINGS_FILTER = os.path.join(SETTINGS[f'{ENV}_SETTINGS_DIRS'][0], 
@@ -19,6 +22,7 @@ SETTINGS[f'{ENV}_DEFAULT_SETTINGS_ADVANCED'])
 selected_paths_holder = {}
 refresh_dropdown_output_box = widgets.Output()
 bindcraft_launch_box = widgets.Output()
+LOG_FILE = None
 
 
 def settings_widget(dirs: list) -> dict:
@@ -50,6 +54,7 @@ def on_submit_settings_clicked(button,
                                json_target_dropdown: widgets.Dropdown = None) -> str:
     
     # Use dropdown if selected (widget is not none and contains a value), else use text widget
+    global LOG_FILE
     json_target_path = json_target_dropdown.value.strip() if json_target_dropdown and json_target_dropdown.value else json_target_path_widget.value.strip()
 
     with bindcraft_launch_box:
@@ -100,6 +105,7 @@ def on_submit_settings_clicked(button,
         TARGET_NAME=TARGET_NAME,
         LOG_DIR=LOG_DIR
     )
+    LOG_FILE = f"{LOG_DIR}/{TARGET_NAME}-bindcraft_log.txt"
 
     bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')
     with open(bindcraft_run_file, 'w') as out:
@@ -108,7 +114,40 @@ def on_submit_settings_clicked(button,
     os.chmod(bindcraft_run_file, 0o755)
     with bindcraft_launch_box:
         logger.info(f"Script written to {bindcraft_run_file}.")
-        logger.info(f"To tail log, run: tail -f {LOG_DIR}/{TARGET_NAME}-bindcraft_log.txt")
+        logger.info(f"To tail log in a terminal, run: tail -f {LOG_FILE}")
+    
+    return LOG_FILE
+
+def tail_log_widget(log_file: str, N: int = 30, refresh: float = 1.0):
+    """Display and live-update the last N lines of a log file in Jupyter."""
+    if not os.path.exists(log_file):
+        raise FileNotFoundError(f"Log file not found: {log_file}")
+    
+    # Text area widget
+    output_box = widgets.Textarea(
+        value="",
+        placeholder="Waiting for log output...",
+        description="Log:",
+        layout=widgets.Layout(width="100%", height="300px"),
+        disabled=True
+    )
+    display(output_box)
+
+    # Function to update log output
+    def update_loop():
+        while True:
+            try:
+                with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                    lines = f.readlines()[-N:]
+                output_box.value = "".join(lines)
+            except Exception as e:
+                output_box.value = f"Error reading log: {e}"
+            time.sleep(refresh)
+
+    # Start background thread
+    t = threading.Thread(target=update_loop, daemon=True)
+    t.start()
+
 
 def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     """Run the updated BindCraft run file, unless in DEV mode."""
@@ -134,6 +173,8 @@ def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
     except subprocess.CalledProcessError as e:
         with bindcraft_launch_box:
             logger.exception(f"BindCraft run launch failed: {e}")
+    
+    tail_log_widget(LOG_FILE)
 
 def main_launch_bindcraft_UI(
     json_target_path_widget: widgets.Text,
@@ -146,8 +187,6 @@ def main_launch_bindcraft_UI(
         with refresh_dropdown_output_box:
             print("Refresh clicked")
         target_files = sorted(glob(f'{base_path}/settings/*.json'))
-        with refresh_dropdown_output_box:
-            print(f"Updating {directory} dropdown options to: {filenames}")
         json_target_dropdown.options = [os.path.basename(f) for f in target_files]
     
     """Main UI to select settings and run BindCraft."""
@@ -167,7 +206,7 @@ def main_launch_bindcraft_UI(
     )
     
     refresh_button.on_click(refresh_dropdowns)
-    #print(f"Refreshing dropdown for {directory} - found files: {filenames}")
+    
 
     submit_settings_button = widgets.Button(
         description='Generate BindCraft Run Script with Settings',
