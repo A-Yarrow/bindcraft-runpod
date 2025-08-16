@@ -24,7 +24,6 @@ def save_target_json(filename, json_target_path, data):
     with open(full_path, 'w') as f:
         json.dump(data, f, indent=4)
     with editor_output_box:
-        #print(f"Data saved to {full_path}")
         logger.info(f"Data saved to {full_path}")
 
 def update_data(data, widget_dict):
@@ -36,7 +35,6 @@ def update_data(data, widget_dict):
                 val = json.loads(val)
             except json.JSONDecodeError:
                 with editor_output_box:
-                    #print(f"Error decoding JSON for key '{key}', keeping original value.")
                     logger.error(f"Error decoding JSON for key '{key}', keeping original value.")
                 val = data[key]
         updated_data[key] = val

@@ -1,4 +1,5 @@
 import os
+import signal
 import logging
 import subprocess
 from glob import glob
@@ -11,19 +12,18 @@ from main_UI import logger
 import threading
 import time
 
-
 # SETTINGS
 DEFAULT_SETTINGS_FILTER = os.path.join(SETTINGS[f'{ENV}_SETTINGS_DIRS'][0], 
 SETTINGS[f'{ENV}_DEFAULT_SETTINGS_FILTER'])
 DEFAULT_SETTINGS_ADVANCED = os.path.join(SETTINGS[f'{ENV}_SETTINGS_DIRS'][1], 
 SETTINGS[f'{ENV}_DEFAULT_SETTINGS_ADVANCED'])
+PID_DIR = SETTINGS[f'{ENV}_PID_DIR']
+os.makedirs(PID_DIR, exist_ok=True)
 
 # GLOBAL HOLDERS
 selected_paths_holder = {}
 refresh_dropdown_output_box = widgets.Output()
 bindcraft_launch_box = widgets.Output()
-LOG_FILE = None
-
 
 def settings_widget(dirs: list) -> dict:
     """Build dropdown widgets for JSON settings files in specified directories."""
@@ -51,10 +51,10 @@ def on_submit_settings_clicked(button,
                                bindcraft_template_run_file, 
                                output_dir:str, 
                                settings_widget_dict: dict,
-                               json_target_dropdown: widgets.Dropdown = None) -> str:
+                               json_target_dropdown: widgets.Dropdown = None,
+                               env: str = "DEV") -> str:
     
     # Use dropdown if selected (widget is not none and contains a value), else use text widget
-    global LOG_FILE
     json_target_path = json_target_dropdown.value.strip() if json_target_dropdown and json_target_dropdown.value else json_target_path_widget.value.strip()
 
     with bindcraft_launch_box:
@@ -63,10 +63,6 @@ def on_submit_settings_clicked(button,
     selected_paths = {os.path.basename(k): dd.value for k, dd in settings_widget_dict.items()}
     selected_paths_holder.clear()
     selected_paths_holder.update(selected_paths)
-    print("Selected settings:")
-    for k, v in selected_paths_holder.items():
-        with bindcraft_launch_box:
-            print(f"  {k}: {v}")
 
     """Fill template with settings paths and run bindcraft_run.sh."""
     for folder, file in selected_paths_holder.items():
@@ -87,11 +83,6 @@ def on_submit_settings_clicked(button,
             logger.debug("Missing required paths in selected_paths_holder.")
         return
 
-    print(f"Using:")
-    print(f"  Filters:  {filters_path}")
-    print(f"  Advanced: {advanced_path}")
-    print(f"  Target:   {json_target_path}")
-
     with open(bindcraft_template_run_file, 'r') as f:
         template = Template(f.read())
 
@@ -103,9 +94,16 @@ def on_submit_settings_clicked(button,
         TARGET_FILE_PATH=json_target_path,
         TARGET_FILE_NAME=os.path.basename(json_target_path),
         TARGET_NAME=TARGET_NAME,
-        LOG_DIR=LOG_DIR
+        LOG_DIR=LOG_DIR,
+        ENV=env,
+        
     )
     LOG_FILE = f"{LOG_DIR}/{TARGET_NAME}-bindcraft_log.txt"
+    
+    # Ensure log directory exists and create an empty log file
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, 'a') as f:
+        pass  # create empty file if it doesn't exist
 
     bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')
     with open(bindcraft_run_file, 'w') as out:
@@ -148,33 +146,79 @@ def tail_log_widget(log_file: str, N: int = 30, refresh: float = 1.0):
     t = threading.Thread(target=update_loop, daemon=True)
     t.start()
 
+def get_pids(pid_dir:str) -> dict:
+    # Load existing PID files
+    # Make Dictionary to hold running jobs {job_name: PID}
+    running_bindcraft_jobs = {}
+    
+    job_list = glob(f"{pid_dir}/*-bindcraft_pid.txt")
+    for pid_file in job_list:
+        job_name = os.path.basename(pid_file).replace("-bindcraft_pid.txt", "")
+        with open(pid_file, "r") as f:
+            running_bindcraft_jobs[job_name] = int(f.read().strip())
+    
+    return running_bindcraft_jobs
 
-def run_bindcraft(button=None, bindcraft_run_file: str = None) -> None:
-    """Run the updated BindCraft run file, unless in DEV mode."""
+def job_name_widget(default_job_name):
+    return widgets.Text(
+        value=f"{default_job_name}",
+        description='Enter a job id for the Bindcraft Run (Required)',
+        disabled=False,
+    )
+
+def job_name_on_clicked(button, job_name_widget):
+    job_name = job_name_widget.value.strip()
     with bindcraft_launch_box:
-        logger.info(f"run_bindcraft() triggered with: {bindcraft_run_file}")
-    from settings import ENV  # Import here if ENV isn't global
+        logger.info(f"Job Name: {job_name} has been registered")
 
-    if ENV == 'DEV':
-        with bindcraft_launch_box:
-            logger.debug("Skipping BindCraft execution in DEV mode.")
-        return
+    
+def run_bindcraft(button=None, bindcraft_run_file: str = None,
+                job_name: str = None,
+                log_file: str = None,
+                env: str = "DEV") -> None:
 
+    """Run the updated BindCraft run file, unless in DEV mode."""
+    running_bindcraft_jobs = get_pids(PID_DIR)
+    
     if not bindcraft_run_file or not os.path.exists(bindcraft_run_file):
         with bindcraft_launch_box:
             logger.error(f"BindCraft run file does not exist or is invalid: {bindcraft_run_file}")
         return
-
-    with bindcraft_launch_box:
-        logger.info(f"Running BindCraft with script: {bindcraft_run_file}")
     
+    if not job_name:
+        with bindcraft_launch_box:
+            print("Please enter a job name")
+        return
+
+    if env == 'DEV':
+        with bindcraft_launch_box:
+            logger.debug("Skipping BindCraft execution in DEV mode.")
+            logger.info(f"DEV mode: Dummy run for job name: {job_name}")
+
     try:
-        subprocess.run(["bash", bindcraft_run_file], check=True)
+        proc = subprocess.Popen(["bash", bindcraft_run_file])
+        pid = proc.pid
+        
+        #Store PID in memory and in file
+        running_bindcraft_jobs[job_name] = pid
+        pid_file_path = os.path.join(PID_DIR, f"{job_name}-bindcraft_pid.txt" )
+        
+        #Store PID in file
+        with open(pid_file_path, "w") as f:
+            f.write(str(pid))
+            
+        with bindcraft_launch_box:
+                logger.info(f"Registered BindCraft job Name '{job_name}' with PID {pid}")
+        
+        with bindcraft_launch_box:
+            logger.info(f"run_bindcraft() triggered with: '{bindcraft_run_file}'")
+
     except subprocess.CalledProcessError as e:
         with bindcraft_launch_box:
             logger.exception(f"BindCraft run launch failed: {e}")
     
-    tail_log_widget(LOG_FILE)
+    if log_file:
+        tail_log_widget(log_file)
 
 def main_launch_bindcraft_UI(
     json_target_path_widget: widgets.Text,
@@ -186,9 +230,18 @@ def main_launch_bindcraft_UI(
     def refresh_dropdowns(b):
         with refresh_dropdown_output_box:
             print("Refresh clicked")
-        target_files = sorted(glob(f'{base_path}/settings/*.json'))
+        target_files = sorted(glob(f'{base_path}/settings_target/*.json'))
         json_target_dropdown.options = [os.path.basename(f) for f in target_files]
     
+    """Helper function to read in job_name widget value"""
+    def on_run_bindcraft_clicked(button):
+        job_name = job_name_text_widget.value.strip() # get current widget value
+        run_bindcraft(
+            bindcraft_run_file = bindcraft_template_run_file.replace('_template', ''),
+            log_file=log_file,
+            env=env,
+            job_name=job_name
+        )
     """Main UI to select settings and run BindCraft."""
     settings_widget_dict = settings_widget(settings_dirs)
     
@@ -207,7 +260,6 @@ def main_launch_bindcraft_UI(
     
     refresh_button.on_click(refresh_dropdowns)
     
-
     submit_settings_button = widgets.Button(
         description='Generate BindCraft Run Script with Settings',
         button_style='success',
@@ -221,17 +273,44 @@ def main_launch_bindcraft_UI(
         output_dir=output_dir,
         settings_widget_dict=settings_widget_dict,
         json_target_dropdown=json_target_dropdown
-    ))
+        ))
+
+    # Job Name widget
+    default_job_name = os.path.basename(json_target_path_widget.value.strip())[:-5]+'-1'
+    job_name_text_widget = job_name_widget(default_job_name)
+    
+    job_name_button = widgets.Button(
+        description='Submit Job Name',
+        button_style='primary',
+        layout=widgets.Layout(width='30%')
+    )
+    
+    job_name_button.on_click(
+        partial(job_name_on_clicked, job_name_widget=job_name_text_widget)
+        )
+
 
     run_bindcraft_button = widgets.Button(
         description='Run BindCraft',
         button_style='primary',
         layout=widgets.Layout(width='30%')
-    )
+        )
 
-    run_bindcraft_button.on_click(
-        partial(run_bindcraft,
-        bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')))
+    env = ENV #From settings
+    # Pre-generate run script for logging
+    log_file = on_submit_settings_clicked(
+    button=None,
+    base_path=base_path,
+    json_target_path_widget=json_target_path_widget,
+    bindcraft_template_run_file=bindcraft_template_run_file,
+    output_dir=output_dir,
+    settings_widget_dict=settings_widget_dict,
+    json_target_dropdown=json_target_dropdown,
+    env=env,
+        )
+    
+    run_bindcraft_button.on_click(on_run_bindcraft_clicked)
+ 
     
     display(json_target_dropdown)
     
@@ -242,6 +321,8 @@ def main_launch_bindcraft_UI(
         display(widget)
     
     display(submit_settings_button)
+    display(job_name_text_widget)
+    display(job_name_button)
     display(run_bindcraft_button)
     display(bindcraft_launch_box)
 

@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import logging
 from Bio.PDB import PDBParser
@@ -17,8 +18,8 @@ BINDCRAFT_TEMPLATE_PATH = SETTINGS[f'{ENV}_BINDCRAFT_TEMPLATE_PATH']
 BINDCRAFT_OUTPUT_PATH = SETTINGS[f'{ENV}_BINDCRAFT_OUTPUT_PATH']
 DEFAULT_TARGET_JSON = SETTINGS[f'{ENV}_DEFAULT_TARGET_JSON']
 
-# Logging configuration
 
+# Logging configuration
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -54,7 +55,7 @@ JSON_UI_OUTPUT_WIDGET = widgets.Output()
 
 import ipywidgets as widgets
 from IPython.display import display
-
+        
 def step_box(text, font_size='16px'):
     return widgets.HTML(
         value=f"<div style='padding: 8px; background-color: #eef; font-size: {font_size}; border: 1px solid #ccd; border-radius: 6px;'><strong>{text}</strong></div>"
