@@ -53,10 +53,6 @@ def on_save_clicked(button,
     new_path = os.path.join(os.path.dirname(json_target_path),filename)
     path_output_widget.value = new_path 
 
-    with editor_output_box:
-        print(f"Using JSON file: {path_output_widget.value}")
-    logger.info(f"Using JSON file: {path_output_widget.value}")
-
 def target_editor_widget(data):
     widget_dict = {}
     for k, v in data.items():
@@ -80,7 +76,8 @@ def main_launch_target_editor(json_target_path: str, path_output_widget: widgets
     filename_widget = widgets.Text(
         value=os.path.basename(json_target_path),
         description='File Name:',
-        layout=widgets.Layout(width='50%')
+        layout=widgets.Layout(width='50%'),
+        style={'description_width':'initial'}
     )
 
     widget_dict = target_editor_widget(data)

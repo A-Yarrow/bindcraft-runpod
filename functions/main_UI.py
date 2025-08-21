@@ -2,6 +2,7 @@ import os
 import signal
 import sys
 import logging
+from datetime import datetime
 from Bio.PDB import PDBParser
 from Bio.PDB.PDBExceptions import PDBConstructionException
 from pathlib import Path
@@ -27,7 +28,11 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 
-file_handler = logging.FileHandler('Bindcraft_launch_UI.log')
+#Record start time
+start_time = datetime.now()
+
+#Add UI logging
+file_handler = logging.FileHandler(f"{start_time}-Bindcraft_launch_UI.log")
 file_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
@@ -160,12 +165,17 @@ def launch_all_ui():
 
     display(step_box("""
         <strong>Welcome to the BindCraft User Interface</strong><br><br>
-        There are three basic steps to running Bindcraft:<br>
-        1. Select a target JSON file.<br>
-        2. Select a <em>settings filters</em> file (<code>settings_filters.json</code>) — this determines the filters used when selecting binding candidates.<br>
-        3. Select an <em>advanced settings</em> file (<code>settings_advanced.json</code>).<br><br>
+        Below are the basic steps to running Bindcraft:<br>
+        1. Upload a target PDB file (If not allready uploaded)<br> 
+        2. If you have one, upload a settings target JSON file<br>
+           Or make a new one in the JSON file fields below. Make sure to provide the path your target PDB file<br>
+        3. Select a job Name (required)
+        4. Select a <em>settings starget JSON</em> file (refresh if you uploaded or made a new one)<br>
+           Select a <em>settings filters</em> file (<code>settings_filters.json</code>) — this determines the filters used when selecting binding candidates.<br>
+        5. Select an <em>advanced settings</em> file (<code>settings_advanced.json</code>).<br><br>
+        6. Run BindCraft!<br>
 
-        The default JSON files are a good place to start.<br>
+        The default settings files are a good place to start.<br>
         To learn more, I encourage you to check out the BindCraft repo README:
         <a href="https://github.com/martinpacesa/BindCraft" target="_blank">GitHub Repo</a><br>
         as well as the wiki:
@@ -184,22 +194,8 @@ def launch_all_ui():
         8. <strong>Number of Final Designs</strong> — Number of output binders that pass filters.<br>
         """))
         
-    display(step_box("<strong>Step 1:</strong> Optional: Upload a JSON file to your settings_target directory"))
     
-    upload_and_save_file(
-        save_directory=f'{BASE_PATH}/settings_target',
-        description="Upload JSON",
-        filetypes='.json',
-        on_success = refresh_target_editor
-)   
-    display(JSON_UI_OUTPUT_WIDGET)
-
-    #Load the default target json at startup
-    display(step_box("Optional: If needed, edit or create a new target JSON file."))
-    refresh_target_editor(DEFAULT_TARGET_JSON)
-    display(target_editor_container)
-
-    display(step_box(f"<strong> Step 2:</strong> If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
+    display(step_box(f"<strong> Step 1:</strong> If not aleady present, upload a PDB file to your {BASE_PATH}/inputs directory."))
     
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/inputs',
@@ -207,8 +203,23 @@ def launch_all_ui():
         filetypes='.pdb'
 )   
     display(PDB_UI_OUTPUT_WIDGET)
+    
+    display(step_box("<strong>Step 2:</strong> If not allready present, upload a JSON file to your settings_target directory"))
+    
+    upload_and_save_file(
+        save_directory=f'{BASE_PATH}/settings_target',
+        description="Upload JSON",
+        filetypes='.json',
+        on_success = refresh_target_editor
+)
+    display(JSON_UI_OUTPUT_WIDGET)
 
-    display(step_box("Step 3: Select your settings files and run BindCraft"))
+    #Load the default target json at startup
+    display(step_box("Or you can edit/create a new target JSON file."))
+    refresh_target_editor(DEFAULT_TARGET_JSON)
+    display(target_editor_container)
+
+    display(step_box("Step 3-6: Create your job name, select your settings files, and run BindCraft"))
     main_launch_bindcraft_UI(
         json_target_path_widget=selected_json_target_path_widget,
         settings_dirs=SETTINGS_DIRS,
