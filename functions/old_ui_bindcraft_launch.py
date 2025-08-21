@@ -1,7 +1,6 @@
 import os
 import signal
 import logging
-import psutil
 import subprocess
 from glob import glob
 from string import Template
@@ -181,7 +180,7 @@ def tail_log_widget(log_file: str, pid_file: str, N: int = 30, refresh: float = 
                         if pid is None and not pid_checked:
                             output_box.value += f"\n[WARN] Unable to read PID file yet: {pid_file}"
                             pid_checked = True  # only warn once
-                    # Check if PID exists. bindcraft_run.sh will clean it up when it exits
+                    # Check if PID exists
                     if pid is not None and not psutil.pid_exists(pid):
                         output_box.value += "\n=== Job Finished ==="
                         job_finished = True

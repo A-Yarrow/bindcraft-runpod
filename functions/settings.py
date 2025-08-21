@@ -9,6 +9,7 @@ SETTINGS = {
         '/workspace/settings_filters',
         '/workspace/settings_advanced'
     ],
+    'PROD_JSON_TARGET_DIR': '/workspace/settings_target',
     'PROD_PID_DIR':'/workspace/pids',
     #Default values
     'PROD_DEFAULT_SETTINGS_FILTER':'default_filters.json',
@@ -27,6 +28,7 @@ SETTINGS = {
         '/home/yarrow/projects/bindcraft-runpod/settings_filters',
         '/home/yarrow/projects/bindcraft-runpod/settings_advanced'
     ],
+    'DEV_JSON_TARGET_DIR': '/home/yarrow/projects/bindcraft-runpod/settings_target',
     'DEV_PID_DIR':'/home/yarrow/projects/bindcraft-runpod/pids',
 
     #Default values
