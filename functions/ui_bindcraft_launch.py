@@ -29,6 +29,8 @@ job_registration_box = widgets.Output()
 bindcraft_launch_box = widgets.Output()
 json_path_output_box = widgets.Output()
 generate_bindcraft_run_script_box = widgets.Output()
+refresh_jobs_output_box = widgets.Output()
+pid_output_box = widgets.Output()
 
 def settings_widget(dirs: list) -> dict:
     """Build dropdown widgets for JSON settings files in specified directories."""
@@ -214,14 +216,101 @@ def get_pids(pid_dir:str) -> dict:
         with open(pid_file, "r") as f:
             running_bindcraft_jobs[job_name] = int(f.read().strip())
     
+    #rebuild dictionary using only valid running pids
+    running_bindcraft_jobs = {
+        job_name:pid
+        for job_name, pid in running_bindcraft_jobs.items()
+        if psutil.pid_exists(pid)
+    }
+    
     return running_bindcraft_jobs
+
+def clean_stale_pids(pid_dir):
+    for pid_file in glob(f"{pid_dir}/*-bindcraft_pid.txt"):
+        try:
+            with open(pid_file, "r") as f:
+                pid = int(f.read().strip())
+            if not psutil.pid_exists(pid):
+                os.remove(pid_file)
+                with pid_output_box:
+                    print(f"Removed stale PID file: {pid_file}")
+        except Exception:
+            # bad file, just remove it
+            os.remove(pid_file)
+
+def abort_run_widget(pid_dir:str) -> widgets.Dropdown:
+    running_bindcraft_jobs = get_pids(pid_dir)
+    options = sorted(running_bindcraft_jobs.keys())
+    value = options[0] if options else None #Empty list evaluates to False
+    disabled = len(options) == 0 #True if options is empty list 
+    
+    return widgets.Dropdown(
+        options=options,
+        value=value,
+        description="Select a job to abort",
+        style={'description_width': 'initial'},
+        disabled=disabled
+    )
+
+def on_abort_run_widget_click(button, 
+                              pid_dir: str, 
+                              abort_dropdown:widgets.Dropdown, 
+                              ):
+    running_bindcraft_jobs = get_pids(pid_dir) #refresh each click
+    abort_job = abort_dropdown.value
+    
+    if not abort_job:
+        with pid_output_box:
+            print ('There are no running jobs to abort')
+        return
+    
+    try:
+        abort_pid = running_bindcraft_jobs[abort_job]
+        process = psutil.Process(abort_pid)
+        process.terminate()
+        with pid_output_box:
+            print(f'job ID:{abort_job}, with PID:{abort_pid} has been terminated')
+        #refresh the abort dropdown
+        
+        def wait_for_termination():
+            while psutil.pid_exists(abort_pid):
+                time.sleep(1)
+            refresh_abort_dropdown(abort_dropdown)
+            with pid_output_box:
+                logger.info(f"Job '{abort_job}' has been terminated and dropdown refreshed.")
+    
+        threading.Thread(target=wait_for_termination, daemon=True).start()
+    
+    except psutil.NoSuchProcess:
+        with pid_output_box:
+            print(f"Job '{abort_job}' was not running. Refreshing dropdown.")
+            refresh_abort_dropdown(abort_dropdown)
+    except Exception as e:
+        with pid_output_box:
+            logger.warning(f"Error terminating {abort_job}: {e}")
+
+def refresh_jobs(button, abort_dropdown:widgets.Dropdown):
+    abort_dropdown.options = list(get_pids(pid_dir=PID_DIR).keys())
+    with refresh_jobs_output_box:
+        print("Running Jobs List Refreshed")
+
+def refresh_abort_dropdown(abort_dropdown: widgets.Dropdown):
+    clean_stale_pids(PID_DIR)
+    jobs = list(get_pids(PID_DIR).keys())
+    abort_dropdown.options = jobs
+    if jobs:
+        abort_dropdown.values = jobs[0]
+        abort_dropdown.disabled = False
+    else:
+        abort_dropdown.value = None
+        abort_dropdown.disabled = True
 
 def job_name_widget(default_job_name):
     return widgets.Text(
         value=f"{default_job_name}",
         description='Enter a job name for the Bindcraft Run (Required)',
         disabled=False,
-        layout=widgets.Layout(width='25%'),
+        layout=widgets.Layout(width='50%'),
         style={'description_width':'initial'}
     )
 
@@ -309,7 +398,6 @@ def main_launch_bindcraft_UI(
     job_name_button = widgets.Button(
         description='Submit Job Name',
         button_style='primary',
-        layout=widgets.Layout(width='10%'),
         style={'description_width':'initial'}
     )
     
@@ -324,7 +412,7 @@ def main_launch_bindcraft_UI(
         json_target_dropdown.options = [os.path.basename(f) for f in target_files]
     
     """Helper function to read in job_name widget value"""
-    def on_run_bindcraft_clicked(button):
+    def on_run_bindcraft_clicked(button, abort_dropdown):
         job_name = job_name_text_widget.value.strip() # get current widget value
         #call on_submit_settings_clicked again so you get the new log file name.
         
@@ -346,7 +434,9 @@ def main_launch_bindcraft_UI(
             env=env,
             job_name=job_name
         )
-    
+        # refresh abort dropdown after job launch
+        refresh_abort_dropdown(abort_dropdown)
+
     """Main UI to select settings and run BindCraft."""
     settings_widget_dict = settings_widget(settings_dirs)
     
@@ -390,7 +480,26 @@ def main_launch_bindcraft_UI(
         layout=widgets.Layout(width='30%'),
         style={'description_width':'initial'}
         )
+    
+    clean_stale_pids(pid_dir=PID_DIR)
+    abort_dropdown = abort_run_widget(pid_dir=PID_DIR)
+    abort_jobs_button = widgets.Button(
+        description='Abort a running job',
+        button_style='warning',
+        style={'description_width':'initial'}
+        )
+    abort_jobs_button.on_click(
+        partial(on_abort_run_widget_click,
+                pid_dir=PID_DIR,
+                abort_dropdown=abort_dropdown
+        )
+    )
 
+    refresh_jobs_button = widgets.Button(
+    description="🔄 Refresh Jobs Dropdown Menu",
+    button_style='warning',
+    style={'description_width': 'initial'}
+    )
     env = ENV #From settings
     # Pre-generate run script for logging
     log_file = on_submit_settings_clicked(
@@ -405,22 +514,20 @@ def main_launch_bindcraft_UI(
         )
     
     run_bindcraft_button.on_click(
-        partial(on_run_bindcraft_clicked))
- 
-    display(job_name_text_widget)
-    display(job_name_button)
-    display(job_registration_box)
+        partial(on_run_bindcraft_clicked, abort_dropdown=abort_dropdown))
     
-    display(json_target_dropdown)
-    display(json_path_output_box)
-    display(refresh_button)
-    display(refresh_dropdown_output_box)
+    refresh_jobs_button.on_click(lambda b:refresh_abort_dropdown(abort_dropdown))
+                                
+    #-- Display Widgets --
+    display(job_name_text_widget, job_name_button, job_registration_box)
+    
+    
+    display(json_target_dropdown, json_path_output_box, refresh_button, refresh_dropdown_output_box)
+  
     display(widgets.Label("Remember to click 'Refresh Json Dropdown' after uploading, editing or saving a new Target Json file"))
-    for directory, widget in settings_widget_dict.items():
+    for widget in settings_widget_dict.values():
         display(widget)
+    display(submit_settings_button, generate_bindcraft_run_script_box, run_bindcraft_button, bindcraft_launch_box)
     
-    display(submit_settings_button)
-    display(generate_bindcraft_run_script_box)
-    display(run_bindcraft_button)
-    display(bindcraft_launch_box)
-
+    #Abort Jobs
+    display(abort_dropdown, abort_jobs_button, refresh_jobs_button, pid_output_box)
