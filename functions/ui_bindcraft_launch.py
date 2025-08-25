@@ -305,9 +305,9 @@ def refresh_abort_dropdown(abort_dropdown: widgets.Dropdown):
         abort_dropdown.value = None
         abort_dropdown.disabled = True
 
-def job_name_widget(default_job_name):
+def job_name_widget():
     return widgets.Text(
-        value=f"{default_job_name}",
+        value=None,
         description='Enter a job name for the Bindcraft Run (Required)',
         disabled=False,
         layout=widgets.Layout(width='50%'),
@@ -392,8 +392,8 @@ def main_launch_bindcraft_UI(
 
     
     # Job Name widget
-    default_job_name = os.path.basename(json_target_path_widget.value.strip())[:-5]+'-1'
-    job_name_text_widget = job_name_widget(default_job_name)
+    #default_job_name = os.path.basename(json_target_path_widget.value.strip())[:-5]+'-1'
+    job_name_text_widget = job_name_widget()
     
     job_name_button = widgets.Button(
         description='Submit Job Name',
@@ -436,13 +436,16 @@ def main_launch_bindcraft_UI(
         )
         # refresh abort dropdown after job launch
         refresh_abort_dropdown(abort_dropdown)
-
+    
+    # JSON TARGET DROPDOWN WIDGET
+    
     """Main UI to select settings and run BindCraft."""
     settings_widget_dict = settings_widget(settings_dirs)
     
     """Json target dropdwon widget"""
     json_target_dropdown = widgets.Dropdown(
     options=sorted(glob(f'{base_path}/settings_target/*.json')),
+    value=None,
     description='Select Target JSON:',
     style={'description_width': 'initial'},
     layout=widgets.Layout(width='70%')
@@ -453,6 +456,16 @@ def main_launch_bindcraft_UI(
     layout=widgets.Layout(width='30%'),
     style={'description_width': 'initial'}
     )
+    # Status Message
+    json_target_status_label = widgets.HTML(
+        value = f"<b>Selected Target JSON: </b>{json_target_dropdown.value}")
+    
+    # Udpate JSON TARGET DROPDOWN CALLBACK
+    def update_json_target_dropdown_status(change):
+        if change['type'] == 'change' and change['name'] == 'value':
+            json_target_status_label.value = f"<b>Selected Target JSON: </b>{change['new']}"
+    
+    json_target_dropdown.observe(update_json_target_dropdown_status, names='value')
     
     refresh_button.on_click(refresh_dropdowns)
     
@@ -498,7 +511,8 @@ def main_launch_bindcraft_UI(
     refresh_jobs_button = widgets.Button(
     description="🔄 Refresh Jobs Dropdown Menu",
     button_style='warning',
-    style={'description_width': 'initial'}
+    style={'description_width': 'initial'},
+    Layout=widgets.Layout(width = '35%')
     )
     env = ENV #From settings
     # Pre-generate run script for logging
@@ -522,7 +536,7 @@ def main_launch_bindcraft_UI(
     display(job_name_text_widget, job_name_button, job_registration_box)
     
     
-    display(json_target_dropdown, json_path_output_box, refresh_button, refresh_dropdown_output_box)
+    display(json_target_dropdown, json_target_status_label, refresh_button, refresh_dropdown_output_box)
   
     display(widgets.Label("Remember to click 'Refresh Json Dropdown' after uploading, editing or saving a new Target Json file"))
     for widget in settings_widget_dict.values():

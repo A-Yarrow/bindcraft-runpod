@@ -10,7 +10,8 @@ SETTINGS = {
         '/workspace/settings_advanced'
     ],
     'PROD_JSON_TARGET_DIR': '/workspace/settings_target',
-    'PROD_PID_DIR':'/workspace/pids',
+    'PROD_PID_DIR':'/workspace/tmp/pids',
+    'PROD_UI_LOGS_DIR':'/workspace/tmp/ui_logs',
     #Default values
     'PROD_DEFAULT_SETTINGS_FILTER':'default_filters.json',
     'PROD_DEFAULT_SETTINGS_ADVANCED':'default_4stage_multimer.json',
@@ -29,7 +30,8 @@ SETTINGS = {
         '/home/yarrow/projects/bindcraft-runpod/settings_advanced'
     ],
     'DEV_JSON_TARGET_DIR': '/home/yarrow/projects/bindcraft-runpod/settings_target',
-    'DEV_PID_DIR':'/home/yarrow/projects/bindcraft-runpod/pids',
+    'DEV_PID_DIR':'/home/yarrow/projects/bindcraft-runpod/tmp/pids',
+    'DEV_UI_LOGS_DIR':'/home/yarrow/projects/bindcraft-runpod/tmp/ui_logs',
 
     #Default values
     'DEV_DEFAULT_SETTINGS_FILTER':'default_filters.json',

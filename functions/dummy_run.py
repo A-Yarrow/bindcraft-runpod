@@ -21,5 +21,5 @@ for i in itertools.count(1):
     current_time = datetime.now()
     print(f"[Step {i}] {steps[i % len(steps)]}...", flush=True)
     dt = current_time - starting_time
-    print(dt)
     time.sleep(2)
+    print(dt, flush=True)

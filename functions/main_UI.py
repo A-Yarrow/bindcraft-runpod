@@ -18,7 +18,8 @@ SETTINGS_DIRS = SETTINGS[f'{ENV}_SETTINGS_DIRS']
 BINDCRAFT_TEMPLATE_PATH = SETTINGS[f'{ENV}_BINDCRAFT_TEMPLATE_PATH']
 BINDCRAFT_OUTPUT_PATH = SETTINGS[f'{ENV}_BINDCRAFT_OUTPUT_PATH']
 DEFAULT_TARGET_JSON = SETTINGS[f'{ENV}_DEFAULT_TARGET_JSON']
-
+UI_LOGS_DIR = SETTINGS[f'{ENV}_UI_LOGS_DIR']
+os.makedirs(UI_LOGS_DIR, exist_ok=True)
 
 # Logging configuration
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ stream_handler.setFormatter(formatter)
 start_time = datetime.now()
 
 #Add UI logging
-file_handler = logging.FileHandler(f"{start_time}-Bindcraft_launch_UI.log")
+file_handler = logging.FileHandler(f"{UI_LOGS_DIR}/{start_time}-Bindcraft_launch_UI.log")
 file_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
