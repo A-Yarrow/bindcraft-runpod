@@ -166,6 +166,7 @@ jupyter lab $START_NOTEBOOK \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
+  --NotebookApp.log_append=True" \
   --NotebookApp.token='' \
   --NotebookApp.password='' \
   --no-browser || {
