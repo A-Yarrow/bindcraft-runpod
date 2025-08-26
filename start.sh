@@ -89,7 +89,7 @@ if [ ! -f "$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME" ]; then
   echo "[STEP] Downloading PyRosetta package..."
   mkdir -p "$PYROSETTA_PACKAGE_DIR"
   cd "$PYROSETTA_PACKAGE_DIR"
-  wget "$PYROSETTA_PACKAGE_URL" -O "$PYROSETTA_PACKAGE_NAME" || {
+  wget -nc "$PYROSETTA_PACKAGE_URL" -O "$PYROSETTA_PACKAGE_NAME" || {
     echo "[FAIL] Failed to download PyRosetta" | tee -a "$STATUS_FILE"
     exit 1
   }
@@ -116,17 +116,19 @@ fi
 if [ ! -f "$ALPHAFOLD_WEIGHTS_FILE" ]; then
   echo "[STEP] Downloading AlphaFold2 weights..."
   cd "$BINDCRAFT_DIR/params"
-  wget https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
+  wget -nc https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar || {
     echo "[FAIL] Failed to download AlphaFold2 weights" | tee -a "$STATUS_FILE"
+    exit 1
   }
   echo "[INFO] Extracting weights..."
-  tar -xf "$ALPHAFOLD_WEIGHTS_ARCHIVE" && rm "$ALPHAFOLD_WEIGHTS_ARCHIVE" || {
+  tar --no-same-owner -xf "$ALPHAFOLD_WEIGHTS_ARCHIVE" && rm "$ALPHAFOLD_WEIGHTS_ARCHIVE" || {
     echo "[FAIL] Failed to extract weights" | tee -a "$STATUS_FILE"
+    exit 1
   }
+  rm -f "$ALPHAFOLD_WEIGHTS_ARCHIVE"
 else
   echo "[INFO] AlphaFold2 weights already present"
 fi
-
 
 # Kernel Registration
 
@@ -138,6 +140,13 @@ mamba install -y ipykernel || {
 python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)" --sys-prefix || {
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$STATUS_FILE"
 }
+
+# Cleanup old Jupyter runtime files
+rm -f /root/.local/share/jupyter/runtime/*.pid || true
+
+# Disable unused/missing Jupyter extensions to avoid warnings
+jupyter server extension disable jupyter_archive || true
+jupyter server extension disable nbclassic || true
 
 # JupyterLab Launch
 
