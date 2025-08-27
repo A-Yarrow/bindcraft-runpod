@@ -1,14 +1,4 @@
 #!/bin/bash
-
-# Logging setup
-LOG_FILE="/workspace/startup.log"
-touch "$LOG_FILE"
-chmod 644 "$LOG_FILE"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo "=== [STARTUP] $(date) ==="
-echo "Log output redirected to $LOG_FILE"
-
 # Config variables
 BINDCRAFT_DIR="/app/bindcraft"
 WORKSPACE_DIR="/workspace"
@@ -24,8 +14,19 @@ PYROSETTA_PACKAGE_PATH="$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME"
 ALPHAFOLD_WEIGHTS_ARCHIVE="alphafold_params_2022-12-06.tar"
 ALPHAFOLD_WEIGHTS_FILE="$BINDCRAFT_DIR/params/params_model_5_ptm.npz"
 
+#Jupyter Configeration
 JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
+JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
+
+# Logging setup
+LOG_FILE="$WORKSPACE_DIR/startup.log"
+touch "$LOG_FILE"
+chmod 644 "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "=== [STARTUP] $(date) ==="
+echo "Log output redirected to $LOG_FILE"
 
 # Environment Setup
 mkdir -p "$PYROSETTA_PACKAGE_DIR"
@@ -163,24 +164,49 @@ echo "[STEP] Launching JupyterLab on port $JUPYTER_PORT..."
 
 if [ -f "$NOTEBOOK_DEST" ]; then
   echo "[INFO] Trusting notebook: $(basename "$NOTEBOOK_DEST")"
-  jupyter trust "$(basename "$NOTEBOOK_DEST")"
+  jupyter trust "$NOTEBOOK_DEST"
   START_NOTEBOOK="$(basename "$NOTEBOOK_DEST")"
 else
   echo "[WARN] Notebook not found. Launching without a specific notebook."
   START_NOTEBOOK=""
 fi
 
+# Generate a random password
+JUPYTER_PASS=$(openssl rand -hex 16)
+
+# Hash the password for Jupyter
+HASHED_PASS=$(python -m jupyter_server.auth.passwd -f <(echo $JUPYTER_PASS))
+
+# Write config with hashed password
+mkdir -p ~/.jupyter
+cat > ~/.jupyter/jupyter_server_config.json <<EOF
+{
+  "ServerApp": {
+    "password": "$HASHED_PASS",
+    "token": ""
+  }
+}
+EOF
+
+echo "$JUPYTER_PASS" | tee "$JUPYTER_PASS_FILE"
+chmod 600 "$JUPYTER_PASS_FILE"
+
+echo "====================================="
+echo "Your Jupyter password is: $JUPYTER_PASS"
+echo "your password is saved in: $JUPYTER_PASS_FILE"
+echo "====================================="
+
 jupyter lab $START_NOTEBOOK \
-  --notebook-dir="$WORKSPACE_DIR" \
-  --NotebookApp.allow_origin='*' \
+  --ServerApp.root_dir="$WORKSPACE_DIR" \
+  --ServerApp.allow_origin='*' \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
-  --NotebookApp.log_append=True \
-  --NotebookApp.token='' \
-  --NotebookApp.password='' \
+  --token:"" \
+  --ServerApp.log_append=True \
   --no-browser || {
     echo "[FAIL] Failed to launch JupyterLab" | tee -a "$LOG_FILE"
 }
 
 echo "=== [FINISHED] Startup complete: $(date) ===" | tee -a "$LOG_FILE"
+echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT"
