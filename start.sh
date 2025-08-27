@@ -156,9 +156,9 @@ rm -f /root/.local/share/jupyter/runtime/*.pid || true
 # Disable unused/missing Jupyter extensions to avoid warnings
 jupyter server extension disable jupyter_archive || true
 jupyter server extension disable nbclassic || true
+jupyter nbextension disable jupyter_nbextensions_configurator || true
 
 # JupyterLab Launch
-
 cd "$WORKSPACE_DIR"
 echo "[STEP] Launching JupyterLab on port $JUPYTER_PORT..."
 
@@ -191,10 +191,13 @@ EOF
 echo "$JUPYTER_PASS" | tee "$JUPYTER_PASS_FILE"
 chmod 600 "$JUPYTER_PASS_FILE"
 
-echo "====================================="
-echo "Your Jupyter password is: $JUPYTER_PASS"
-echo "your password is saved in: $JUPYTER_PASS_FILE"
-echo "====================================="
+echo "=====================================" | tee -a "$LOG_FILE"
+echo "Your Jupyter password is: $JUPYTER_PASS" | tee -a "$LOG_FILE"
+echo "your password is saved in: $JUPYTER_PASS_FILE" | tee -a "$LOG_FILE" 
+echo "=====================================" | tee -a "$LOG_FILE"
+
+echo "=== [FINISHED] Startup complete: $(date) ===" | tee -a "$LOG_FILE"
+echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT" | tee -a "$LOG_FILE"
 
 jupyter lab $START_NOTEBOOK \
   --ServerApp.root_dir="$WORKSPACE_DIR" \
@@ -202,11 +205,8 @@ jupyter lab $START_NOTEBOOK \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
-  --token:"" \
   --ServerApp.log_append=True \
   --no-browser || {
     echo "[FAIL] Failed to launch JupyterLab" | tee -a "$LOG_FILE"
 }
 
-echo "=== [FINISHED] Startup complete: $(date) ===" | tee -a "$LOG_FILE"
-echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT"
