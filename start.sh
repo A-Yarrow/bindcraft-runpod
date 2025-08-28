@@ -153,11 +153,6 @@ python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)"
 # Cleanup old Jupyter runtime files
 rm -f /root/.local/share/jupyter/runtime/*.pid || true
 
-# Disable unused/missing Jupyter extensions to avoid warnings
-jupyter server extension disable jupyter_archive || true
-jupyter server extension disable nbclassic || true
-jupyter nbextension disable jupyter_nbextensions_configurator || true
-
 # JupyterLab Launch
 cd "$WORKSPACE_DIR"
 echo "[STEP] Launching JupyterLab on port $JUPYTER_PORT..."
@@ -171,11 +166,22 @@ else
   START_NOTEBOOK=""
 fi
 
+# Write config to disable missing extensions (avoid warnings)
+mkdir -p ~/.jupyter
+cat > ~/.jupyter/jupyter_server_config.py <<'PYCONF'
+c = get_config()
+c.ServerApp.jpserver_extensions = {
+    "nbclassic": False,
+    "jupyter_nbextensions_configurator": False,
+    "jupyter_archive": False,
+}
+PYCONF
+
 # Generate a random password
 JUPYTER_PASS=$(openssl rand -hex 16)
 
 # Hash the password for Jupyter
-HASHED_PASS=$(python -m jupyter_server.auth.passwd -f <(echo $JUPYTER_PASS))
+HASHED_PASS=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASS'))")
 
 # Write config with hashed password
 mkdir -p ~/.jupyter
@@ -188,24 +194,26 @@ cat > ~/.jupyter/jupyter_server_config.json <<EOF
 }
 EOF
 
+#Save password file
 echo "$JUPYTER_PASS" | tee "$JUPYTER_PASS_FILE"
 chmod 600 "$JUPYTER_PASS_FILE"
 
-echo "=====================================" | tee -a "$LOG_FILE"
-echo "Your Jupyter password is: $JUPYTER_PASS" | tee -a "$LOG_FILE"
-echo "your password is saved in: $JUPYTER_PASS_FILE" | tee -a "$LOG_FILE" 
-echo "=====================================" | tee -a "$LOG_FILE"
-
-echo "=== [FINISHED] Startup complete: $(date) ===" | tee -a "$LOG_FILE"
-echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT" | tee -a "$LOG_FILE"
+echo "=====================================" 
+echo "Your Jupyter password is: $JUPYTER_PASS" 
+echo "your password is saved in: $JUPYTER_PASS_FILE" 
+echo "=====================================" 
+echo "=== [FINISHED] Startup complete: $(date) ===" 
+echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT" 
 
 jupyter lab $START_NOTEBOOK \
   --ServerApp.root_dir="$WORKSPACE_DIR" \
   --ServerApp.allow_origin='*' \
+  --ServerApp.allow_remote_access=True \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
-  --ServerApp.log_append=True \
+  --ServerApp.password="$HASHED_PASS" \
+  --ServerApp.token="" \
   --no-browser || {
     echo "[FAIL] Failed to launch JupyterLab" | tee -a "$LOG_FILE"
 }
