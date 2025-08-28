@@ -184,14 +184,9 @@ JUPYTER_PASS=$(openssl rand -hex 16)
 HASHED_PASS=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASS'))")
 
 # Write config with hashed password
-mkdir -p ~/.jupyter
-cat > ~/.jupyter/jupyter_server_config.json <<EOF
-{
-  "ServerApp": {
-    "password": "$HASHED_PASS",
-    "token": ""
-  }
-}
+cat >> ~/.jupyter/jupyter_server_config.py <<EOF
+c.ServerApp.identity_provider_class = "jupyter_server.auth.identity.PasswordIdentityProvider"
+c.PasswordIdentityProvider.hashed_password = "${HASHED_PASS}"
 EOF
 
 #Save password file
