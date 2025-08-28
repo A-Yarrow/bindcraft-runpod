@@ -14,10 +14,14 @@ PYROSETTA_PACKAGE_PATH="$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME"
 ALPHAFOLD_WEIGHTS_ARCHIVE="alphafold_params_2022-12-06.tar"
 ALPHAFOLD_WEIGHTS_FILE="$BINDCRAFT_DIR/params/params_model_5_ptm.npz"
 
+#COPARTY Configeration
+coparty -d "$WORKSPACE_DIR" -p 8000 &
+
 #Jupyter Configeration
 JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
 JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
+JUPYTER_CONFIG_FILE=~/.jupyter/jupyter_server_config.py
 
 # Logging setup
 LOG_FILE="$WORKSPACE_DIR/startup.log"
@@ -177,6 +181,17 @@ c.ServerApp.jpserver_extensions = {
 }
 PYCONF
 
+#Write config to access CopyParty
+cat >> "$JUPYTER_CONFIG_FILE" <<'COPYPARTY'
+c.ServerProxy.servers = {
+    "copyparty": {
+        "command": ["coparty", "-d", "/workspace", "-p", "{port}"],
+        "timeout": 30,
+        "port": 8000,
+      }
+}
+COPYPARTY
+
 # Generate a random password
 JUPYTER_PASS=$(openssl rand -hex 16)
 
@@ -184,7 +199,7 @@ JUPYTER_PASS=$(openssl rand -hex 16)
 HASHED_PASS=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASS'))")
 
 # Write config with hashed password
-cat >> ~/.jupyter/jupyter_server_config.py <<EOF
+cat >> "$JUPYTER_CONFIG_FILE" <<EOF
 c.ServerApp.identity_provider_class = "jupyter_server.auth.identity.PasswordIdentityProvider"
 c.PasswordIdentityProvider.hashed_password = "${HASHED_PASS}"
 EOF
@@ -207,7 +222,6 @@ jupyter lab $START_NOTEBOOK \
   --ip="$JUPYTER_IP" \
   --port="$JUPYTER_PORT" \
   --allow-root \
-  --ServerApp.password="$HASHED_PASS" \
   --ServerApp.token="" \
   --no-browser || {
     echo "[FAIL] Failed to launch JupyterLab" | tee -a "$LOG_FILE"

@@ -64,10 +64,10 @@ echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 # install required conda packages
 echo -e "Installing conda requirements\n"
 if [ -n "$cuda" ]; then
-    CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
+    CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install -y \
   pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
   libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
-  flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil\
+  flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil \
   jaxlib=*=*cuda* jax cuda-nvcc cudnn \
   -c conda-forge -c nvidia || \
   { echo -e "Error: Failed to install conda packages."; exit 1; }
@@ -84,11 +84,13 @@ fi
 # make sure all required packages were installed
 required_packages=(
   pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
-  jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
-  ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn psutil
+  jupyter jupyterlab jupyter-server-proxy ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
+  ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn psutil copyparty 
 )
 missing_packages=()
 
+# Install pip-only packages if needed
+python -m pip install jupyter-server-proxy coparty
 # Check each package
 for pkg in "${required_packages[@]}"; do
     conda list "$pkg" | grep -w "$pkg" >/dev/null 2>&1 || missing_packages+=("$pkg")
