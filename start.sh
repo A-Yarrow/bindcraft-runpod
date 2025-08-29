@@ -14,14 +14,13 @@ PYROSETTA_PACKAGE_PATH="$PYROSETTA_PACKAGE_DIR/$PYROSETTA_PACKAGE_NAME"
 ALPHAFOLD_WEIGHTS_ARCHIVE="alphafold_params_2022-12-06.tar"
 ALPHAFOLD_WEIGHTS_FILE="$BINDCRAFT_DIR/params/params_model_5_ptm.npz"
 
-#COPARTY Configeration
-coparty -d "$WORKSPACE_DIR" -p 8000 &
 
 #Jupyter Configeration
 JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
 JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
-JUPYTER_CONFIG_FILE=~/.jupyter/jupyter_server_config.py
+JUPYTER_CONFIG_FILE="$HOME/.jupyter/jupyter_server_config.py"
+JUPYTER_LAB_CONFIG_FILE="$HOME/.jupyter/labconfig/coparty.json"
 
 # Logging setup
 LOG_FILE="$WORKSPACE_DIR/startup.log"
@@ -54,8 +53,8 @@ mkdir -p \
   "$WORKSPACE_DIR/settings_target" \
   "$WORKSPACE_DIR/settings_filters" \
   "$WORKSPACE_DIR/settings_advanced" \
-  "$WORKSPACE_DIR/outputs/PDL1" \
-  "$WORKSPACE_DIR/inputs" \
+  "$WORKSPACE_DIR/outputs" \
+  "$WORKSPACE_DIR/inputs" 
 
 if [ ! -d "$BINDCRAFT_DIR/params" ]; then
   echo "[INFO] Creating params directory in $BINDCRAFT_DIR"
@@ -75,7 +74,6 @@ if [ ! -f "$NOTEBOOK_DEST" ]; then
 else
   echo "[INFO] Notebook already exists in $WORKSPACE_DIR — skipping copy"
 fi
-
 
 # Copy Default Configs if missing
 
@@ -182,15 +180,28 @@ c.ServerApp.jpserver_extensions = {
 PYCONF
 
 #Write config to access CopyParty
+mkdir -p "$HOME/.jupyter/labconfig"
 cat >> "$JUPYTER_CONFIG_FILE" <<'COPYPARTY'
 c.ServerProxy.servers = {
     "copyparty": {
         "command": ["coparty", "-d", "/workspace", "-p", "{port}"],
         "timeout": 30,
-        "port": 8000,
       }
 }
 COPYPARTY
+
+# Copyparty JupyterLab launcher integration
+mkdir -p ~/.jupyter/labconfig
+cat > "$JUPYTER_LAB_CONFIG_FILE" <<'COPARTYLAB'
+{
+  "command": ["coparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
+  "timeout": 60,
+  "launcher_entry": {
+    "title": "Copyparty",
+    "icon_path": ""
+  }
+}
+COPARTYLAB
 
 # Generate a random password
 JUPYTER_PASS=$(openssl rand -hex 16)

@@ -35,8 +35,7 @@ RUN chmod 644 /app/bindcraft/bindcraft-runpod-start.ipynb
 
 # Expose Jupyter port
 EXPOSE 8888
-# Expose Copyparty web server port
-EXPOSE 8000
+
 # Default command
 CMD ["/app/bindcraft/start.sh"] 
 # For development, launch Jupyter notebook
