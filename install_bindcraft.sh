@@ -90,7 +90,7 @@ required_packages=(
 missing_packages=()
 
 # Install pip-only packages if needed
-python -m pip install jupyter-server-proxy coparty
+python -m pip install jupyter-server-proxy copyparty
 # Check each package
 for pkg in "${required_packages[@]}"; do
     conda list "$pkg" | grep -w "$pkg" >/dev/null 2>&1 || missing_packages+=("$pkg")
