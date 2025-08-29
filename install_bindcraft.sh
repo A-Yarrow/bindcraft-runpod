@@ -68,7 +68,7 @@ if [ -n "$cuda" ]; then
   pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
   libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
   flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil \
-  jaxlib=*=*cuda* jax cuda-nvcc cudnn \
+  "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0=*cuda*" cuda-nvcc cudnn \
   -c conda-forge -c nvidia || \
   { echo -e "Error: Failed to install conda packages."; exit 1; }
 
@@ -76,7 +76,7 @@ else
     $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
     libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
     flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil \
-    jaxlib jax cuda-nvcc cudnn \
+    "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0=*cuda*" cuda-nvcc cudnn \
     -c conda-forge -c nvidia -y || \
     { echo -e "Error: Failed to install conda packages."; exit 1; }
 fi
@@ -85,7 +85,7 @@ fi
 required_packages=(
   pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
   jupyter jupyterlab jupyter-server-proxy ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
-  ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn psutil copyparty 
+  ml-collections immutabledict optax "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0" cuda-nvcc cudnn psutil copyparty 
 )
 missing_packages=()
 
