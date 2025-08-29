@@ -104,26 +104,28 @@ def on_submit_settings_clicked(button,
     with open(bindcraft_template_run_file, 'r') as f:
         template = Template(f.read())
 
-    TARGET_NAME = os.path.splitext(os.path.basename(json_target_path))[0]
-    LOG_DIR = f"{output_dir}/outputs/{TARGET_NAME}"
+    TARGET_NAME = job_name
+    LOG_DIR = f"{output_dir}/outputs/{job_name}"
+    os.makedirs(LOG_DIR, exist_ok=True)
     new_template = template.safe_substitute(
         FILTERS_FILE_PATH=filters_path,
         ADVANCED_FILE_PATH=advanced_path,
         TARGET_FILE_PATH=json_target_path,
         TARGET_FILE_NAME=os.path.basename(json_target_path),
-        TARGET_NAME=TARGET_NAME,
+        TARGET_NAME=TARGET_NAME, #change to job name
         LOG_DIR=LOG_DIR,
         ENV=env,
         JOB_NAME=job_name,
         PID_DIR=pid_dir
         
     )
-    LOG_FILE = f"{LOG_DIR}/{TARGET_NAME}-bindcraft_log.txt"
+    LOG_FILE = f"{LOG_DIR}/{job_name}-bindcraft_log.txt"
     
     # Ensure log directory exists and create an empty log file
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a') as f:
         pass  # create empty file if it doesn't exist
+
 
     bindcraft_run_file = bindcraft_template_run_file.replace('_template', '')
     with open(bindcraft_run_file, 'w') as out:
