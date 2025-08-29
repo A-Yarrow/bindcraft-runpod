@@ -3,7 +3,7 @@
     "binder_name": "PDL1-Binder",
     "starting_pdb": "/workspace/inputs/PDL1.pdb",
     "chains": "A",
-    "target_hotspot_residues": "56, 22",
+    "target_hotspot_residues": "56",
     "lengths": [
         65,
         150
