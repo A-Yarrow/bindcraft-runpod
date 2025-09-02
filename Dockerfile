@@ -1,5 +1,5 @@
-# Use RunPod-compatible image with CUDA 12.4 and PyTorch
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+# Base image: RunPod PyTorch with CUDA 12.7 for Ada GPUs
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.7.0-devel-ubuntu22.04
 
 # Install base tools and libraries
 RUN apt-get update && apt-get install -y \
@@ -32,6 +32,11 @@ RUN chmod +x install_bindcraft.sh && \
 # Set permissions on startup script and notebook
 RUN chmod 755 /app/bindcraft/start.sh
 RUN chmod 644 /app/bindcraft/bindcraft-runpod-start.ipynb
+
+
+# Environment variables for JAX / CUDA
+ENV XLA_PYTHON_CLIENT_MEM_FRACTION=0.8
+ENV XLA_FLAGS="--xla_gpu_enable_command_buffer=false"
 
 # Expose Jupyter port
 EXPOSE 8888
