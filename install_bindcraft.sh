@@ -85,7 +85,7 @@ fi
 required_packages=(
   pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
   jupyter jupyterlab jupyter-server-proxy ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
-  ml-collections immutabledict optax "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0" cuda-nvcc cudnn psutil copyparty 
+  ml-collections immutabledict optax jax jaxlib cuda-nvcc cudnn psutil copyparty 
 )
 missing_packages=()
 
