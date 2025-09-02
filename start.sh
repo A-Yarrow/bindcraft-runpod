@@ -168,40 +168,32 @@ else
   START_NOTEBOOK=""
 fi
 
-# Write config to disable missing extensions (avoid warnings)
+# Write config to disable missing extensions (avoid warnings) + CopyParty setup
 mkdir -p ~/.jupyter
 cat > ~/.jupyter/jupyter_server_config.py <<'PYCONF'
 c = get_config()
+
+# Disable noisy extensions
 c.ServerApp.jpserver_extensions = {
     "nbclassic": False,
     "jupyter_nbextensions_configurator": False,
     "jupyter_archive": False,
 }
-PYCONF
 
-#Write config to access CopyParty
-mkdir -p "$HOME/.jupyter/labconfig"
-cat >> "$JUPYTER_CONFIG_FILE" <<'COPYPARTY'
+# Copyparty integration
 c.ServerProxy.servers = {
     "copyparty": {
-        "command": ["coparty", "-d", "/workspace", "-p", "{port}"],
-        "timeout": 30,
-      }
+        "command": ["coparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
+        "timeout": 60,
+        "launcher_entry": {
+            "title": "Copyparty",
+            "icon_path": ""
+        }
+    }
 }
-COPYPARTY
+PYCONF
 
-# Copyparty JupyterLab launcher integration
-mkdir -p ~/.jupyter/labconfig
-cat > "$JUPYTER_LAB_CONFIG_FILE" <<'COPARTYLAB'
-{
-  "command": ["coparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
-  "timeout": 60,
-  "launcher_entry": {
-    "title": "Copyparty",
-    "icon_path": ""
-  }
-}
-COPARTYLAB
+PYCONF
 
 # Generate a random password
 JUPYTER_PASS=$(openssl rand -hex 16)
