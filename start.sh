@@ -89,6 +89,22 @@ for d in settings_target settings_filters settings_advanced inputs; do
 done
 
 
+
+# Checking GPU info
+echo "[INFO] NVIDIA-SMI output:"
+nvidia-smi
+
+echo "[INFO] CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+
+# PyTorch check
+python - <<END
+import torch
+print(f"[INFO] PyTorch CUDA available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"[INFO] GPU name: {torch.cuda.get_device_name(0)}")
+    print(f"[INFO] Total VRAM (GB): {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f}")
+END
+
 # PyRosetta Install
 
 if ! python -c "import pyrosetta" >/dev/null 2>&1; then
