@@ -88,8 +88,6 @@ for d in settings_target settings_filters settings_advanced inputs; do
   fi
 done
 
-
-
 # Checking GPU info
 echo "[INFO] NVIDIA-SMI output:"
 nvidia-smi
