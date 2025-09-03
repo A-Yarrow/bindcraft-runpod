@@ -1,7 +1,6 @@
-# Base image for RTX6000 Ada: RunPod PyTorch with CUDA 12.7 for Ada GPUs
+# Base image for RTX6000 Ada: RunPod PyTorch with CUDA 12.8 for Ada GPUs
 # For older GPUs (RTX 5000) try runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
-
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.7.0-devel-ubuntu22.04
+FROM runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04
 
 # Install base tools and libraries
 RUN apt-get update && apt-get install -y \
@@ -29,7 +28,7 @@ RUN git clone --branch dev --single-branch https://github.com/A-Yarrow/bindcraft
 WORKDIR /app/bindcraft
 # Install BindCraft (no PyRosetta or weights)
 RUN chmod +x install_bindcraft.sh && \
-    bash install_bindcraft.sh --cuda '12.7' --pkg_manager 'mamba' 
+    bash install_bindcraft.sh --cuda '12.8' --pkg_manager 'mamba' 
 
 # Set permissions on startup script and notebook
 RUN chmod 755 /app/bindcraft/start.sh
