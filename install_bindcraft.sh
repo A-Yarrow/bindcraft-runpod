@@ -81,11 +81,17 @@ else
     { echo -e "Error: Failed to install conda packages."; exit 1; }
 fi
 
+# install PyTorch with CUDA.PyTorch not available in the base image
+echo -e "Installing PyTorch with CUDA\n"
+$pkg_manager install pytorch torchvision torchaudio pytorch-cuda=12.7 -c pytorch -c nvidia -y || \
+{ echo -e "Error: Failed to install PyTorch"; exit 1; }
+
 # make sure all required packages were installed
 required_packages=(
   pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
   jupyter jupyterlab jupyter-server-proxy ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
-  ml-collections immutabledict optax jax jaxlib cuda-nvcc cudnn psutil copyparty 
+  ml-collections immutabledict optax jax jaxlib cuda-nvcc cudnn psutil copyparty \
+  pytorch torchvision torchaudio pytorch-cuda
 )
 missing_packages=()
 
