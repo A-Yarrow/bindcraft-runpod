@@ -97,10 +97,10 @@ if [ ${#missing_packages[@]} -ne 0 ]; then
     exit 1
 fi
 
-# install JAX pinned to CUDA 12.2
+# install JAX pinned 
 pip install --no-cache-dir \
-  jax==0.4.27 \
-  jaxlib==0.4.27+cuda12.cudnn89 \
+  'jax>=0.4,<=0.6.0' \
+  'jaxlib>=0.4,<=0.6.0.*cuda*' \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 # Check JAX
