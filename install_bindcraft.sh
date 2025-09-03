@@ -83,7 +83,7 @@ fi
 
 # install PyTorch with CUDA.PyTorch not available in the base image
 echo -e "Installing PyTorch with CUDA\n"
-$pkg_manager install pytorch torchvision torchaudio pytorch-cuda=12.7 -c pytorch -c nvidia -y || \
+$pkg_manager install pytorch torchvision torchaudio pytorch-cuda=12.8 -c pytorch -c nvidia -y || \
 { echo -e "Error: Failed to install PyTorch"; exit 1; }
 
 # make sure all required packages were installed
