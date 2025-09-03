@@ -103,26 +103,6 @@ pip install --no-cache-dir \
   jaxlib==0.4.27+cuda12.cudnn89 \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
-# install PyTorch pinned to CUDA 12.2
-pip install --no-cache-dir \
-  torch==2.4.0+cu122 \
-  torchvision==0.15.2+cu122 \
-  torchaudio==2.4.2+cu122 \
-  --index-url https://download.pytorch.org/whl/cu122
-
-  # Verify GPU-enabled JAX and PyTorch
-echo -e "Verifying GPU-enabled JAX and PyTorch\n"
-
-# Check PyTorch
-python - <<'END'
-import torch
-if not torch.cuda.is_available():
-    raise RuntimeError("PyTorch cannot detect CUDA GPU")
-print("PyTorch CUDA version:", torch.version.cuda)
-print("PyTorch device count:", torch.cuda.device_count())
-print("PyTorch current device:", torch.cuda.get_device_name(torch.cuda.current_device()))
-END
-
 # Check JAX
 python - <<'END'
 import jax
@@ -132,7 +112,7 @@ if not gpu_devices:
 print("JAX devices:", gpu_devices)
 END
 
-echo -e "GPU-enabled JAX and PyTorch verification complete\n"
+echo -e "GPU-enabled JAX verification complete\n"
 
 # install ColabDesign
 echo -e "Installing ColabDesign\n"
