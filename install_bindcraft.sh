@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x #Turn on verbose
 ################## BindCraft installation script
 ################## specify conda/mamba folder, and installation folder for git repositories, and whether to use mamba or $pkg_manager
 # Default value for pkg_manager
@@ -61,42 +60,29 @@ source ${CONDA_BASE}/bin/activate ${CONDA_BASE}/envs/BindCraft || { echo -e "Err
 [ "$CONDA_DEFAULT_ENV" = "BindCraft" ] || { echo -e "Error: The BindCraft environment is not active."; exit 1; }
 echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 
-# install required conda packages
+# install required conda packages (everything else unchanged)
 echo -e "Installing conda requirements\n"
 if [ -n "$cuda" ]; then
-    CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install -y \
-  pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
-  libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
-  flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil \
-  "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0=*cuda*" cuda-nvcc cudnn \
-  -c conda-forge -c nvidia || \
-  { echo -e "Error: Failed to install conda packages."; exit 1; }
-
+  CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
+    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol \
+    chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
+    cuda-nvcc cudnn psutil copyparty \
+    -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
+  || { echo -e "Error: Failed to install conda packages."; exit 1; }
 else
-    $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn \
-    libgfortran5 tqdm jupyter jupyterlab ffmpeg fsspec py3dmol chex dm-haiku \
-    flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax psutil \
-    "jax>=0.4,<=0.6.0" "jaxlib>=0.4,<=0.6.0=*cuda*" cuda-nvcc cudnn \
-    -c conda-forge -c nvidia -y || \
-    { echo -e "Error: Failed to install conda packages."; exit 1; }
+  $pkg_manager install \
+    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol \
+    chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
+    -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
+  || { echo -e "Error: Failed to install conda packages."; exit 1; }
 fi
 
-# install PyTorch with CUDA.PyTorch not available in the base image
-echo -e "Installing PyTorch with CUDA\n"
-$pkg_manager install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia -y || \
-{ echo -e "Error: Failed to install PyTorch"; exit 1; }
-
 # make sure all required packages were installed
-required_packages=(
-  pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm \
-  jupyter jupyterlab jupyter-server-proxy ffmpeg fsspec py3dmol chex dm-haiku dm-tree joblib \
-  ml-collections immutabledict optax jax jaxlib cuda-nvcc cudnn psutil copyparty \
-  pytorch torchvision torchaudio pytorch-cuda
+required_packages=(pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm jupyter jupyterlab jupyter-server-proxy ffmpeg \
+fsspec py3dmol chex dm-haiku dm-tree joblib ml-collections immutabledict optax cuda-nvcc cudnn psutil copyparty \
 )
 missing_packages=()
 
-# Install pip-only packages if needed
-python -m pip install jupyter-server-proxy copyparty
 # Check each package
 for pkg in "${required_packages[@]}"; do
     conda list "$pkg" | grep -w "$pkg" >/dev/null 2>&1 || missing_packages+=("$pkg")
@@ -110,6 +96,43 @@ if [ ${#missing_packages[@]} -ne 0 ]; then
     done
     exit 1
 fi
+
+# install JAX pinned to CUDA 12.2
+pip install --no-cache-dir \
+  jax==0.4.27 \
+  jaxlib==0.4.27+cuda12.cudnn89 \
+  -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# install PyTorch pinned to CUDA 12.2
+pip install --no-cache-dir \
+  torch==2.4.0+cu122 \
+  torchvision==0.15.2+cu122 \
+  torchaudio==2.4.2+cu122 \
+  --index-url https://download.pytorch.org/whl/cu122
+
+  # Verify GPU-enabled JAX and PyTorch
+echo -e "Verifying GPU-enabled JAX and PyTorch\n"
+
+# Check PyTorch
+python - <<'END'
+import torch
+if not torch.cuda.is_available():
+    raise RuntimeError("PyTorch cannot detect CUDA GPU")
+print("PyTorch CUDA version:", torch.version.cuda)
+print("PyTorch device count:", torch.cuda.device_count())
+print("PyTorch current device:", torch.cuda.get_device_name(torch.cuda.current_device()))
+END
+
+# Check JAX
+python - <<'END'
+import jax
+gpu_devices = [d for d in jax.devices() if d.platform == 'gpu']
+if not gpu_devices:
+    raise RuntimeError("JAX cannot detect CUDA GPU")
+print("JAX devices:", gpu_devices)
+END
+
+echo -e "GPU-enabled JAX and PyTorch verification complete\n"
 
 # install ColabDesign
 echo -e "Installing ColabDesign\n"
@@ -138,5 +161,3 @@ echo -e "Successfully finished BindCraft installation!\n"
 echo -e "Activate environment using command: \"$pkg_manager activate BindCraft\""
 echo -e "\n"
 echo -e "Installation took $(($t / 3600)) hours, $((($t / 60) % 60)) minutes and $(($t % 60)) seconds."
-
-set +x #Turn off verbose
