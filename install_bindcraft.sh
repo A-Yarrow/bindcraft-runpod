@@ -99,14 +99,15 @@ if [ ${#missing_packages[@]} -ne 0 ]; then
     exit 1
 fi
 
+# install pip packages
+python -m pip install jupyter-server-proxy
 # install JAX pinned 
-# install JAX pinned (CUDA build from Google storage)
-python -m pip install --upgrade pip wheel
+
+
 python -m pip install --no-cache-dir \
-  "jax=0.4.28" \
+  "jax==0.4.28" \
   "jaxlib==0.4.28+cuda12.cudnn89" \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-
 
 # Check JAX
 python - <<'END'
