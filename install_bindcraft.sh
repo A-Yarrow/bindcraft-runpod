@@ -1,19 +1,22 @@
 #!/bin/bash
+set -e #exit on any error
+
 # Build with: docker build --progress=plain -t bindcraft:test .
 ################## BindCraft installation script optimized for RunPod 12.4 base image: FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 ################## tested on 2025-09-04
 ################## specify conda/mamba folder, and installation folder for git repositories, and whether to use mamba or $pkg_manager
-# Default value for pkg_manager
-pkg_manager='conda'
-cuda=''
 
 # Define the short and long options
 OPTIONS=p:c:
 LONGOPTIONS=pkg_manager:,cuda:
 
-# Parse the command-line options
-PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
+# wrap getopt in || true so set -e won't exit on non-zero
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@") || true
 eval set -- "$PARSED"
+
+# Default value for pkg_manager
+pkg_manager='conda'
+cuda=''
 
 # Process the command-line options
 while true; do
@@ -68,7 +71,7 @@ if [ -n "$cuda" ]; then
   CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
     pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
     chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
-    cuda-nvcc cudnn psutil copyparty \
+    psutil copyparty \
     -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
   || { echo -e "Error: Failed to install conda packages."; exit 1; }
 else
@@ -81,7 +84,7 @@ fi
 
 # make sure all required packages were installed
 required_packages=(pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm jupyter jupyterlab ffmpeg \
-fsspec py3dmol chex dm-haiku dm-tree joblib ml-collections immutabledict optax cuda-nvcc cudnn psutil copyparty \
+fsspec py3dmol chex dm-haiku dm-tree joblib ml-collections immutabledict optax psutil copyparty \
 )
 missing_packages=()
 
@@ -104,18 +107,22 @@ python -m pip install jupyter-server-proxy
 # install JAX pinned 
 
 
+# Minimal JAX GPU install (pip)
+# Minimal JAX GPU install
+python -m pip install --upgrade pip wheel
 python -m pip install --no-cache-dir \
-  "jax==0.4.28" \
-  "jaxlib==0.4.28+cuda12.cudnn89" \
+  jax==0.4.28 \
+  jaxlib==0.4.28+cuda12.cudnn89 \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 # Check JAX
 python - <<'END'
-import jax
+import jax, sys
 gpu_devices = [d for d in jax.devices() if d.platform == 'gpu']
 if not gpu_devices:
-    raise RuntimeError("JAX cannot detect CUDA GPU")
-print("JAX devices:", gpu_devices)
+    print("ERROR: JAX cannot detect CUDA GPU. Exiting.")
+    sys.exit(1)
+print("JAX GPU devices detected:", gpu_devices)
 END
 
 echo -e "GPU-enabled JAX verification complete\n"
