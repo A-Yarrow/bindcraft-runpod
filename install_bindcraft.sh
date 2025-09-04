@@ -65,22 +65,17 @@ source ${CONDA_BASE}/bin/activate ${CONDA_BASE}/envs/BindCraft || { echo -e "Err
 [ "$CONDA_DEFAULT_ENV" = "BindCraft" ] || { echo -e "Error: The BindCraft environment is not active."; exit 1; }
 echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 
-# install required conda packages (everything else unchanged)
+# install required conda packages
 echo -e "Installing conda requirements\n"
-if [ -n "$cuda" ]; then
-  CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
-    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
-    chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
-    psutil copyparty \
-    -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
-  || { echo -e "Error: Failed to install conda packages."; exit 1; }
-else
-  $pkg_manager install \
-    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
-    chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
-    -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
-  || { echo -e "Error: Failed to install conda packages."; exit 1; }
-fi
+
+$pkg_manager install \
+  pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm \
+  jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
+  chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
+  psutil copyparty \
+  -c conda-forge --channel https://conda.graylab.jhu.edu -y \
+|| { echo -e "Error: Failed to install conda packages."; exit 1; }
+
 
 # make sure all required packages were installed
 required_packages=(pip pandas libgfortran5 matplotlib numpy biopython scipy pdbfixer seaborn tqdm jupyter jupyterlab ffmpeg \
@@ -104,32 +99,21 @@ fi
 
 # install pip packages
 python -m pip install jupyter-server-proxy
-# install JAX pinned 
 
-
-# Minimal JAX GPU install (pip)
-# Minimal JAX GPU install
+# JAX GPU install (pip)
+JAX GPU install
 python -m pip install --upgrade pip wheel
 python -m pip install --no-cache-dir \
   jax==0.4.28 \
   jaxlib==0.4.28+cuda12.cudnn89 \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
-# Check JAX
-python - <<'END'
-import jax, sys
-gpu_devices = [d for d in jax.devices() if d.platform == 'gpu']
-if not gpu_devices:
-    print("ERROR: JAX cannot detect CUDA GPU. Exiting.")
-    sys.exit(1)
-print("JAX GPU devices detected:", gpu_devices)
-END
 
 echo -e "GPU-enabled JAX verification complete\n"
 
 # install ColabDesign
 echo -e "Installing ColabDesign\n"
-pip3 install git+https://github.com/sokrypton/ColabDesign.git --no-deps || { echo -e "Error: Failed to install ColabDesign"; exit 1; }
+pip install git+https://github.com/sokrypton/ColabDesign.git --no-deps || { echo -e "Error: Failed to install ColabDesign"; exit 1; }
 python -c "import colabdesign" >/dev/null 2>&1 || { echo -e "Error: colabdesign module not found after installation"; exit 1; }
 
 # chmod executables
