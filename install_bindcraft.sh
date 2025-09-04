@@ -1,9 +1,5 @@
 #!/bin/bash
-set -x
-export BASH_XTRACEFD=1 # redirect xtrace to stdout
-exec 1>&2 # redirect stdout to stderr
-export PYTHONUNBUFFERED=1 # make python output unbuffered
-export PIP_PROGRESS_BAR=off 
+
 # Build with: docker build --progress=plain -t bindcraft:test .
 ################## BindCraft installation script optimized for RunPod 12.4 base image: FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 ################## tested on 2025-09-04
@@ -19,6 +15,12 @@ LONGOPTIONS=pkg_manager:,cuda:
 # Parse the command-line options
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
 eval set -- "$PARSED"
+
+set -x
+export BASH_XTRACEFD=1 # redirect xtrace to stdout
+exec 1>&2 # redirect stdout to stderr
+export PYTHONUNBUFFERED=1 # make python output unbuffered
+export PIP_PROGRESS_BAR=off 
 
 # Process the command-line options
 while true; do
