@@ -1,5 +1,10 @@
 #!/bin/bash
-set -x # echo commands as they are executed
+set -x
+export BASH_XTRACEFD=1 # redirect xtrace to stdout
+exec 1>&2 # redirect stdout to stderr
+export PYTHONUNBUFFERED=1 # make python output unbuffered
+export PIP_PROGRESS_BAR=off 
+# Build with: docker build --progress=plain -t bindcraft:test .
 ################## BindCraft installation script optimized for RunPod 12.4 base image: FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 ################## tested on 2025-09-04
 ################## specify conda/mamba folder, and installation folder for git repositories, and whether to use mamba or $pkg_manager
@@ -66,14 +71,14 @@ echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 echo -e "Installing conda requirements\n"
 if [ -n "$cuda" ]; then
   CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install \
-    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol \
+    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
     chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
     cuda-nvcc cudnn psutil copyparty \
     -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
   || { echo -e "Error: Failed to install conda packages."; exit 1; }
 else
   $pkg_manager install \
-    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol \
+    pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter jupyterlab ffmpeg pyrosetta fsspec py3dmol \
     chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
     -c conda-forge -c nvidia --channel https://conda.graylab.jhu.edu -y \
   || { echo -e "Error: Failed to install conda packages."; exit 1; }
