@@ -94,14 +94,17 @@ nvidia-smi
 
 echo "[INFO] CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
-# PyTorch check
-python - <<END
-import torch
-print(f"[INFO] PyTorch CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(f"[INFO] GPU name: {torch.cuda.get_device_name(0)}")
-    print(f"[INFO] Total VRAM (GB): {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f}")
+#!/bin/bash
+echo "[INFO]======CHECKING JAX INSTALLATION========="
+python - <<'END'
+import jax, sys
+gpu_devices = [d for d in jax.devices() if d.platform == 'gpu']
+if not gpu_devices:
+    print("ERROR: No CUDA GPU detected at runtime. Exiting.")
+    sys.exit(1)
+print("JAX GPU devices detected:", gpu_devices)
 END
+echo -e "GPU-enabled JAX verification complete\n"
 
 # PyRosetta Install
 
