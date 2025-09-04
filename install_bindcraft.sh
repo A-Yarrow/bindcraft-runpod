@@ -1,5 +1,7 @@
 #!/bin/bash
-################## BindCraft installation script
+set -x # echo commands as they are executed
+################## BindCraft installation script optimized for RunPod 12.4 base image: FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+################## tested on 2025-09-04
 ################## specify conda/mamba folder, and installation folder for git repositories, and whether to use mamba or $pkg_manager
 # Default value for pkg_manager
 pkg_manager='conda'
@@ -98,10 +100,13 @@ if [ ${#missing_packages[@]} -ne 0 ]; then
 fi
 
 # install JAX pinned 
-pip install --no-cache-dir \
-  'jax>=0.4,<=0.6.0' \
-  'jaxlib>=0.4,<=0.6.0.*cuda*' \
+# install JAX pinned (CUDA build from Google storage)
+python -m pip install --upgrade pip wheel
+python -m pip install --no-cache-dir \
+  "jax=0.4.28" \
+  "jaxlib==0.4.28+cuda12.cudnn89" \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
 
 # Check JAX
 python - <<'END'
@@ -141,3 +146,5 @@ echo -e "Successfully finished BindCraft installation!\n"
 echo -e "Activate environment using command: \"$pkg_manager activate BindCraft\""
 echo -e "\n"
 echo -e "Installation took $(($t / 3600)) hours, $((($t / 60) % 60)) minutes and $(($t % 60)) seconds."
+
+set +x # stop echoing commands
