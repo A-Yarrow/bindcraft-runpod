@@ -1,5 +1,7 @@
-# 1 Base image for RTX6000 Ada: RunPod PyTorch with CUDA 12.4 for Ada GPUs
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+# 1 Base image for This image is optimized for JAX development and includes:
+#Ubuntu 22.04.2 LTS with Python 3.10.12, NVIDIA CUDA® 12.1.1, NVIDIA cuDNN 8.9.4
+#NVIDIA cuBLAS 12.2.5, NVIDIA NCCL 2.18.3, NVIDIA DALI® 1.28.0, TransformerEngine 0.13.0.dev0+03202c3
+FROM nvcr.io/nvidia/jax:23.08-py3
 
 # 2 Install base tools and libraries
 RUN apt-get update && apt-get install -y \

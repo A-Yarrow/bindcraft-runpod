@@ -8,7 +8,7 @@ set -e  # exit on any error
 
 # Hardcoded config
 pkg_manager="mamba"   # or "conda" if you prefer
-cuda="12.4"
+cuda="12.1"
 
 ############################################################################################################
 ################## Initialization
@@ -46,7 +46,7 @@ $pkg_manager install \
 echo "Installing pip packages"
 python -m pip install --upgrade pip wheel jupyter-server-proxy
 
-# JAX with CUDA 12.4
+# JAX for CUDA 12.1
 python -m pip install --no-cache-dir \
   jax==0.4.28 \
   jaxlib==0.4.28+cuda12.cudnn89 \
