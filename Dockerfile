@@ -27,7 +27,7 @@ RUN git clone --branch dev --single-branch https://github.com/A-Yarrow/bindcraft
 WORKDIR /app/bindcraft
 # 9 Install BindCraft (no PyRosetta or weights)
 RUN chmod +x install_bindcraft.sh && \
-    bash install_bindcraft.sh --cuda '12.4' --pkg_manager 'mamba' 
+    bash install_bindcraft.sh 
 
 # 10 Set permissions on startup script and notebook
 RUN chmod 755 /app/bindcraft/start.sh
