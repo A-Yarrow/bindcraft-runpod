@@ -20,7 +20,7 @@ JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
 JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
 JUPYTER_CONFIG_FILE="$HOME/.jupyter/jupyter_server_config.py"
-JUPYTER_LAB_CONFIG_FILE="$HOME/.jupyter/labconfig/coparty.json"
+JUPYTER_LAB_CONFIG_FILE="$HOME/.jupyter/labconfig/copyparty.json"
 
 # Logging setup
 LOG_FILE="$WORKSPACE_DIR/startup.log"
@@ -200,7 +200,7 @@ c.ServerApp.jpserver_extensions = {
 # Copyparty integration
 c.ServerProxy.servers = {
     "copyparty": {
-        "command": ["coparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
+        "command": ["copyparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
         "timeout": 60,
         "launcher_entry": {
             "title": "Copyparty",
