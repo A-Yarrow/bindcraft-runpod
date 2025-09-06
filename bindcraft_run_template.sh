@@ -13,6 +13,8 @@ dummy_run_python_file="/home/yarrow/projects/bindcraft-runpod/functions/dummy_ru
 mkdir -p "$LOG_DIR"
 mkdir -p "$PID_DIR"
 
+exec >> "$log_file" 2>&1   # redirect all following output to logfile
+
 echo "[INFO] Checking target settings file..."
 if [ ! -f "$TARGET_FILE_PATH" ]; then
   echo "[ERROR] Target file '$TARGET_FILE_NAME' not found"
@@ -46,10 +48,11 @@ else
 fi
 
 start_time=$(date +%s) #Start timestamp
+echo "INFO] === BindCraft Run Started at $start_time ==="
 
 # Start the Python job in the background
 echo "[INFO] Starting BindCraft job in background..."
-nohup $python_cmd >> "$log_file" 2>&1 &
+nohup $python_cmd >> "$log_file" &
 bindcraft_pid=$!
 echo "$bindcraft_pid" > "$pid_file"
 echo "[INFO] BindCraft PID: $bindcraft_pid"

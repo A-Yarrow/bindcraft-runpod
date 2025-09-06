@@ -383,7 +383,18 @@ def run_bindcraft(button=None, bindcraft_run_file: str = None,
             logger.exception(f"BindCraft run launch failed: {e}")
     
     if log_file:
+    # Wait a short moment until log file exists
+        for _ in range(30):  # retry 100 times
+            if os.path.exists(log_file):
+                break
+            time.sleep(1)
+    else:
+        with bindcraft_launch_box:
+            logger.warning(f"Log file not created yet: {log_file}")
+
         tail_log_widget(log_file, pid_file_path)
+
+        
     
 def main_launch_bindcraft_UI(
     json_target_path_widget: widgets.Text,

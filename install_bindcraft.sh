@@ -2,8 +2,7 @@
 set -e  # exit on any error
 
 # Build with: docker build --progress=plain -t bindcraft:test .
-################## BindCraft installation script optimized for RunPod 12.4 base image
-################## Base: FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+################## BindCraft installation script optimized for RunPod 12.1 base image
 ################## Tested on 2025-09-04
 
 # Hardcoded config
