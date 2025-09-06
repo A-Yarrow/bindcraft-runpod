@@ -205,7 +205,7 @@ def launch_all_ui():
 )   
     display(PDB_UI_OUTPUT_WIDGET)
     
-    display(step_box("<strong>Step 2:</strong> If not allready present, upload a JSON file to your settings_target directory"))
+    display(step_box("<strong>Step 2:</strong> If not allready present, upload a JSON file to your settings_target directory."))
     
     upload_and_save_file(
         save_directory=f'{BASE_PATH}/settings_target',
