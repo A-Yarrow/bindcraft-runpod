@@ -169,6 +169,18 @@ python -m ipykernel install --name=BindCraft --display-name="Python (BindCraft)"
   echo "[FAIL] Failed to register Jupyter kernel" | tee -a "$LOG_FILE"
 }
 
+# Set BindCraft as default kernel for new notebooks
+JUPYTER_CFG_DIR=$(jupyter --data-dir)/nbconfig
+mkdir -p "$JUPYTER_CFG_DIR"
+cat > "$JUPYTER_CFG_DIR/notebook.json" <<EOF
+{
+  "kernelspec": {
+    "default_kernel_name": "BindCraft"
+  }
+}
+EOF
+echo "[INFO] BindCraft kernel set as default"
+
 # Cleanup old Jupyter runtime files
 rm -f /root/.local/share/jupyter/runtime/*.pid || true
 
