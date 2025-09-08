@@ -2,12 +2,14 @@
 set -e  # exit on any error
 
 # Build with: docker build --progress=plain -t bindcraft:test .
-################## BindCraft installation script optimized for RunPod 12.1 base image
+################## BindCraft installation script optimized for RunPod 12.1 base image: nvcr.io/nvidia/jax:23.08-py3
 ################## Tested on 2025-09-04
 
 # Hardcoded config
 pkg_manager="mamba"   # or "conda" if you prefer
-cuda="12.1"
+#For RTX6000, L40, L40S, A40 use: cuda="12.1"
+#For A100 use: cuda="11.8"
+CUDA_VERSION="11.8"
 
 ############################################################################################################
 ################## Initialization
@@ -45,11 +47,20 @@ $pkg_manager install \
 echo "Installing pip packages"
 python -m pip install --upgrade pip wheel jupyter-server-proxy
 
-# JAX for CUDA 12.1
-python -m pip install --no-cache-dir \
-  jax==0.4.28 \
-  jaxlib==0.4.28+cuda12.cudnn89 \
-  -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+if [ "$CUDA_VERSION" = "12.1" ]; then
+    python -m pip install --no-cache-dir \
+      jax==0.4.28 \
+      jaxlib==0.4.28+cuda12.cudnn89 \
+      -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+elif [ "$CUDA_VERSION" = "11.8" ]; then
+    python -m pip install --no-cache-dir \
+      jax==0.5.20 \
+      jaxlib==0.5.20+cuda11_cudnn11 \
+      -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+else
+    echo "[WARN] Unsupported CUDA version for JAX installation"
+fi
 
 ############################################################################################################
 ################## Install ColabDesign

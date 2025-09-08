@@ -20,7 +20,6 @@ JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
 JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
 JUPYTER_CONFIG_FILE="$HOME/.jupyter/jupyter_server_config.py"
-JUPYTER_LAB_CONFIG_FILE="$HOME/.jupyter/labconfig/copyparty.json"
 
 # Logging setup
 LOG_FILE="$WORKSPACE_DIR/startup.log"
@@ -198,8 +197,17 @@ else
 fi
 
 # Write config to disable missing extensions (avoid warnings) + CopyParty setup
-mkdir -p ~/.jupyter
-cat > ~/.jupyter/jupyter_server_config.py <<'PYCONF'
+# Ensure config directory exists
+mkdir -p "$(dirname "$JUPYTER_CONFIG_FILE")"
+
+# Generate a random password
+JUPYTER_PASS=$(openssl rand -hex 16)
+
+# Hash the password for Jupyter
+HASHED_PASS=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASS'))")
+
+# Write jupyter config
+cat > "$JUPYTER_CONFIG_FILE" <<EOF
 c = get_config()
 
 # Disable noisy extensions
@@ -210,40 +218,37 @@ c.ServerApp.jpserver_extensions = {
 }
 
 # Copyparty integration
+# Copyparty integration (ServerProxy)
 c.ServerProxy.servers = {
     "copyparty": {
-        "command": ["copyparty", "-d", "/workspace", "--no-auth", "--http-only", "--port={port}"],
-        "timeout": 60,
+        # Launch copyparty from /workspace
+        "command": ["copyparty", "--http-only"],
+        "cwd": "/workspace",
+        "timeout": 120,
         "launcher_entry": {
             "title": "Copyparty",
             "icon_path": ""
         }
     }
 }
-PYCONF
+}
 
-PYCONF
 
-# Generate a random password
-JUPYTER_PASS=$(openssl rand -hex 16)
-
-# Hash the password for Jupyter
-HASHED_PASS=$(python -c "from jupyter_server.auth import passwd; print(passwd('$JUPYTER_PASS'))")
-
-# Write config with hashed password
-cat >> "$JUPYTER_CONFIG_FILE" <<EOF
+# Password protection
 c.ServerApp.identity_provider_class = "jupyter_server.auth.identity.PasswordIdentityProvider"
 c.PasswordIdentityProvider.hashed_password = "${HASHED_PASS}"
 EOF
 
-#Save password file
+# Save plaintext password separately (restricted perms)
 echo "$JUPYTER_PASS" | tee "$JUPYTER_PASS_FILE"
 chmod 600 "$JUPYTER_PASS_FILE"
 
 echo "=====================================" 
 echo "Your Jupyter password is: $JUPYTER_PASS" 
-echo "your password is saved in: $JUPYTER_PASS_FILE" 
+echo "Password saved in: $JUPYTER_PASS_FILE" 
 echo "=====================================" 
+
+
 echo "=== [FINISHED] Startup complete: $(date) ===" 
 echo "Access JupyterLab at http://$JUPYTER_IP:$JUPYTER_PORT" 
 
