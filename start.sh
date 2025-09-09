@@ -93,7 +93,6 @@ nvidia-smi
 
 echo "[INFO] CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
-#!/bin/bash
 echo "[INFO]======CHECKING JAX INSTALLATION========="
 python - <<'END'
 import jax, sys
@@ -231,8 +230,6 @@ c.ServerProxy.servers = {
         }
     }
 }
-}
-
 
 # Password protection
 c.ServerApp.identity_provider_class = "jupyter_server.auth.identity.PasswordIdentityProvider"
