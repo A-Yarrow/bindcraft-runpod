@@ -2,7 +2,7 @@
 set -e  # exit on any error
 
 # Build with: docker build --progress=plain -t bindcraft:test .
-################## BindCraft installation script optimized for RunPod 12.1 base image: nvcr.io/nvidia/jax:23.08-py3
+################## BindCraft installation script 
 ################## Tested on 2025-09-04
 
 # Hardcoded config
@@ -51,13 +51,14 @@ if [ "$CUDA_VERSION" = "12.1" ]; then
     python -m pip install --no-cache-dir \
       jax==0.4.28 \
       jaxlib==0.4.28+cuda12.cudnn89 \
-      -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+      -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html --no-deps
 
 elif [ "$CUDA_VERSION" = "11.8" ]; then
-    python -m pip install --no-cache-dir \
-      jax==0.5.20 \
-      jaxlib==0.5.20+cuda11_cudnn11 \
-      -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+python -m pip install --no-cache-dir \
+  jax==0.4.20 \
+  jaxlib==0.4.20+cuda11.cudnn86 \
+  -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html --no-deps
+
 else
     echo "[WARN] Unsupported CUDA version for JAX installation"
 fi
