@@ -9,6 +9,8 @@ FROM nvcr.io/nvidia/jax:23.08-py3
 
 RUN apt-get update && apt-get install -y \
     wget \
+    vim \
+    rsync \
     git \
     libgfortran5 \
     ca-certificates \
