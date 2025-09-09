@@ -66,7 +66,7 @@ fi
 ############################################################################################################
 ################## Install ColabDesign
 echo "Installing ColabDesign"
-pip install git+https://github.com/sokrypton/ColabDesign.git --no-deps || { echo "Error: ColabDesign install failed"; exit 1; }
+python -m pip install git+https://github.com/sokrypton/ColabDesign.git || { echo "Error: ColabDesign install failed"; exit 1; }
 python -c "import colabdesign" >/dev/null 2>&1 || { echo "Error: colabdesign not found"; exit 1; }
 
 ############################################################################################################
