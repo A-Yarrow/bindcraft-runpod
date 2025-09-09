@@ -2,10 +2,10 @@
 #Ubuntu 22.04.2 LTS with Python 3.10.12, NVIDIA CUDA® 12.1.1, NVIDIA cuDNN 8.9.4
 #NVIDIA cuBLAS 12.2.5, NVIDIA NCCL 2.18.3, NVIDIA DALI® 1.28.0, TransformerEngine 0.13.0.dev0+03202c3
 #This image works with RUNPOD GPU instances (RTX6000, L40, L40S, A40(very slow)
-#For RTX6000, L40, L40S, A40 use:
-#FROM nvcr.io/nvidia/jax:23.08-py3
-#For A100 with cuda 11 use: 
-FROM nvcr.io/nvidia/jax:23.08-cuda11.8-py3
+#For RTX6000, L40, L40S, A40 (cuda 12.1) use:
+FROM nvcr.io/nvidia/jax:23.08-py3
+#For A100 with cuda 11.8 use: 
+#FROM nvcr.io/nvidia/jax:23.08-cuda11.8-py3
 
 RUN apt-get update && apt-get install -y \
     wget \

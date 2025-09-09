@@ -9,7 +9,7 @@ set -e  # exit on any error
 pkg_manager="mamba"   # or "conda" if you prefer
 #For RTX6000, L40, L40S, A40 use: cuda="12.1"
 #For A100 use: cuda="11.8"
-CUDA_VERSION="11.8"
+CUDA_VERSION="12.1"
 
 ############################################################################################################
 ################## Initialization
