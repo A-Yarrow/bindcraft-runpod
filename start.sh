@@ -20,6 +20,7 @@ JUPYTER_IP="0.0.0.0"
 JUPYTER_PORT=8888
 JUPYTER_PASS_FILE="$WORKSPACE_DIR/jupyter_password.txt"
 JUPYTER_CONFIG_FILE="$HOME/.jupyter/jupyter_server_config.py"
+COPARTY_DIR="/opt/conda/envs/BindCraft/bin"
 
 # Logging setup
 LOG_FILE="$WORKSPACE_DIR/startup.log"
@@ -221,7 +222,7 @@ c.ServerApp.jpserver_extensions = {
 c.ServerProxy.servers = {
     "copyparty": {
         # Launch copyparty from /workspace
-        "command": ["copyparty", "--http-only"],
+        "command": ["${COPARTY_DIR}/copyparty", "--http-only"],
         "cwd": "/workspace",
         "timeout": 120,
         "launcher_entry": {
