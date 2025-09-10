@@ -65,9 +65,10 @@ fi
 
 ############################################################################################################
 ################## Install ColabDesign
-echo "Installing ColabDesign"
-python -m pip install git+https://github.com/sokrypton/ColabDesign.git || { echo "Error: ColabDesign install failed"; exit 1; }
-python -c "import colabdesign" >/dev/null 2>&1 || { echo "Error: colabdesign not found"; exit 1; }
+# install ColabDesign
+echo -e "Installing ColabDesign\n"
+python -m pip install git+https://github.com/sokrypton/ColabDesign.git --no-deps || { echo -e "Error: Failed to install ColabDesign"; exit 1; }
+python -c "import colabdesign" >/dev/null 2>&1 || { echo -e "Error: colabdesign module not found after installation"; exit 1; }
 
 ############################################################################################################
 ################## Fix permissions for executables
