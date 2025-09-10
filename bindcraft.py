@@ -1,9 +1,35 @@
 ####################################
 ###################### BindCraft Run
 ####################################
+
 ### Import dependencies
 from functions import *
 from main_UI import logger
+import psutil
+import pynvml
+
+# overwrite main logger to include CPU/GPU usage
+# --- Helpers ---
+def get_cpu_usage():
+    return psutil.cpu_percent(interval=None)
+
+def get_gpu_usage():
+    try:
+        pynvml.nvmlInit()
+        handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+        util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+        return util.gpu
+    except Exception:
+        return "N/A"
+
+# --- Patch logger.info ---
+_original_info = logger.info
+def _info_with_usage(msg, *args, **kwargs):
+    usage_info = f"[CPU: {get_cpu_usage()}% | GPU: {get_gpu_usage()}%]"
+    return _original_info(f"{usage_info} {msg}", *args, **kwargs)
+
+logger.info = _info_with_usage
+
 # Check if JAX-capable GPU is available, otherwise exit
 check_jax_gpu()
 

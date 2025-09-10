@@ -62,7 +62,8 @@ python -m pip install --no-cache-dir \
 else
     echo "[WARN] Unsupported CUDA version for JAX installation"
 fi
-
+# install nvidia-ml-py3 for GPU monitoring
+python -m pip install nvidia-ml-py3
 ############################################################################################################
 ################## Install ColabDesign
 # install ColabDesign
