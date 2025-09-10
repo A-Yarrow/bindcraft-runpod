@@ -124,21 +124,47 @@ while True:
         # Proceed if there is no trajectory termination signal
         if trajectory.aux["log"]["terminate"] == "":
             # Relax binder to calculate statistics
+            pr_relax_time = time.time()
+            print("Relaxing trajectory structure...")
             trajectory_relaxed = os.path.join(design_paths["Trajectory/Relaxed"], design_name + ".pdb")
             pr_relax(trajectory_pdb, trajectory_relaxed)
-
+            pr_relax_time = time.time() - pr_relax_time
+            pr_relax_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(pr_relax_time // 3600), int((pr_relax_time % 3600) // 60), int(pr_relax_time % 60))}"
+            print("Relaxing trajectory structure took: "+pr_relax_time_text)
+            print("")
             # define binder chain, placeholder in case multi-chain parsing in ColabDesign gets changed
             binder_chain = "B"
 
             # Calculate clashes before and after relaxation
+            print("Calculating clash scores...")
+            clash_calc_time = time.time()
             num_clashes_trajectory = calculate_clash_score(trajectory_pdb)
             num_clashes_relaxed = calculate_clash_score(trajectory_relaxed)
+            clash_calc_time = time.time() - clash_calc_time
+            clash_calc_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(clash_calc_time // 3600), int((clash_calc_time % 3600) // 60), int(clash_calc_time % 60))}"
+            print("Calculating clash scores took: "+clash_calc_time_text)
+            print(f"Number of clashes in unrelaxed trajectory: {num_clashes_trajectory}")
+            print(f"Number of clashes in relaxed trajectory: {num_clashes_relaxed}")
+            print("")
 
+            print("Calculating secondary structure content and interface scores...")
+            calc_ss_time = time.time()
             # secondary structure content of starting trajectory binder and interface
             trajectory_alpha, trajectory_beta, trajectory_loops, trajectory_alpha_interface, trajectory_beta_interface, trajectory_loops_interface, trajectory_i_plddt, trajectory_ss_plddt = calc_ss_percentage(trajectory_pdb, advanced_settings, binder_chain)
-
+            calc_ss_time = time.time() - calc_ss_time
+            calc_ss_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(calc_ss_time // 3600), int((calc_ss_time % 3600) // 60), int(calc_ss_time % 60))}"
+            print("Calculating secondary structure content and interface scores took: "+calc_ss_time_text)
+            print("")
+            
             # analyze interface scores for relaxed af2 trajectory
+            print("Calculating interface scores for relaxed af2 trafectory...")
+            calc_interface_time = time.time()
             trajectory_interface_scores, trajectory_interface_AA, trajectory_interface_residues = score_interface(trajectory_relaxed, binder_chain)
+            calc_interface_time = time.time() - calc_interface_time
+            calc_interface_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(calc_interface_time // 3600), int((calc_interface_time % 360
+            
+            print('Analyzing trajectory sequence...')
+            calc_seq_time = time.time()
 
             # starting binder sequence
             trajectory_sequence = trajectory.get_seq(get_best=True)[0]
@@ -148,7 +174,13 @@ while True:
 
             # target structure RMSD compared to input PDB
             trajectory_target_rmsd = target_pdb_rmsd(trajectory_pdb, target_settings["starting_pdb"], target_settings["chains"])
+            calc_seq_time = time.time() - calc_seq_time
+            calc_seq_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(calc_seq_time // 3600), int((calc_seq_time % 3600) // 60), int(calc_seq_time % 60))}"
+            print("Analyzing trajectory sequence took: "+calc_seq_time_text)
+            print("")
 
+            print("Generating trajectory plots and animations...")
+            plot_anim_time = time.time()
             # save trajectory statistics into CSV
             trajectory_data = [design_name, advanced_settings["design_algorithm"], length, seed, helicity_value, target_settings["target_hotspot_residues"], trajectory_sequence, trajectory_interface_residues, 
                                 trajectory_metrics['plddt'], trajectory_metrics['ptm'], trajectory_metrics['i_ptm'], trajectory_metrics['pae'], trajectory_metrics['i_pae'],
@@ -160,9 +192,16 @@ while True:
                                 trajectory_alpha_interface, trajectory_beta_interface, trajectory_loops_interface, trajectory_alpha, trajectory_beta, trajectory_loops, trajectory_interface_AA, trajectory_target_rmsd, 
                                 trajectory_time_text, traj_seq_notes, settings_file, filters_file, advanced_file]
             insert_data(trajectory_csv, trajectory_data)
+            print("Trajectory statistics saved to CSV")
+            plot_anim_time = time.time() - plot_anim_time
+            plot_anim_time_text = f"{'%d hours, %d minutes, %d seconds' % (int(plot_anim_time // 3600), int((plot_anim_time % 3600) // 60), int(plot_anim_time % 60))}"
+            print("Generating trajectory plots and animations took: "+plot_anim_time_text)
+            print("")
             
             if advanced_settings["enable_mpnn"]:
                 # initialise MPNN counters
+                print("Starting MPNN redesign of trajectory binder...")
+                mpnn_time = time.time()
                 mpnn_n = 1
                 accepted_mpnn = 0
                 mpnn_dict = {}
@@ -430,7 +469,9 @@ while True:
                     else:
                         print("No accepted MPNN designs found for this trajectory.")
                         print("")
-
+                    mpnn_time = time.time() - mpnn_time
+                    mpnn_time_text -= f"{'%d hours, %d minutes, %d seconds' % (int(mpnn_time // 3600), int((mpnn_time % 3600) // 60), int(mpnn_time % 60))}"
+                    print("MPNN redesign of trajectory binder took: "+mpnn_time_text)
                 else:
                     print('Duplicate MPNN designs sampled with different trajectory, skipping current trajectory optimisation')
                     print("")
