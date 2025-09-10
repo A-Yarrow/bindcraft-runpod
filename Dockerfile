@@ -7,6 +7,10 @@ FROM nvcr.io/nvidia/jax:23.08-py3
 #For A100 with cuda 11.8 use: 
 #FROM nvcr.io/nvidia/jax:23.08-cuda11.8-py3
 
+LABEL org.opencontainers.image.source="https://github.com/A-Yarrow/bindcraft-runpod.git"
+LABEL org.opencontainers.image.description="BINDCRAFT GPU with Jupyter GUI"
+LABEL maintainer="Yarrow Madrona <yarrowmadrona@gmail.com>"
+
 RUN apt-get update && apt-get install -y \
     wget \
     vim \
