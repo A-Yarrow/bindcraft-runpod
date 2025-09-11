@@ -4,7 +4,7 @@
 
 ### Import dependencies
 from functions import *
-import logger
+import logging
 import psutil
 import pynvml
 
