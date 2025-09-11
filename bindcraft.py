@@ -96,7 +96,7 @@ generate_filter_pass_csv(failure_csv, args.filters)
 ####################################
 ####################################
 ### initialise PyRosetta
-pr.init(f'-ignore_unrecognized_res -ignore_zero_occupancy -mute all -holes:dalphaball {advanced_settings["dalphaball_path"]} -corrections::beta_nov16 true -relax:default_repeats 1 -out:levels all -run:clock true')
+pr.init(f'-ignore_unrecognized_res -ignore_zero_occupancy -holes:dalphaball {advanced_settings["dalphaball_path"]} -corrections::beta_nov16 true -relax:default_repeats 1')
 logger.info(f"Running binder design for target {settings_file}")
 logger.info(f"Design settings used: {advanced_file}")
 logger.info(f"Filtering designs based on {filters_file}")
