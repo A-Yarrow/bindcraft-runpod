@@ -1,112 +1,117 @@
-# BindCraft-Cloud
+BindCraft-RunPod
 
-**Cloud-native Docker deployment of the [BindCraft](https://github.com/martinpacesa/BindCraft) binder design pipeline**, with support for RunPod, GPU acceleration, and persistent volume-based workflows.
+Streamline Your Protein Engineering with automated cloud deployment and a user-friendly Interface. For detailed instructions on set-up please see this blog post.
 
-This repository is **not a fork** of the original BindCraft repo, but a repackaged, cloud-optimized version that:
-- Installs BindCraft and its dependencies (including ColabDesign, MPNN, JAX, and optionally PyRosetta)
-- Runs in a RunPod container with a lightweight Docker image
-- Supports user-provided design inputs via mounted volumes
-- Offers Jupyter-based interaction for editing targets and launching jobs
-- Allows persistent storage of AlphaFold2 weights and PyRosetta installs
+Quick Start for Protein Engineers: For those eager to begin, I have developed a specialized tool to simplify your workflow. You can immediately access and utilize BindCraft with a pre-configured environment on RunPod (plus an intuitive GUI). This allows you to bypass complex setup and focus directly on your design tasks. Click here to try the BindCraft RunPod template: https://console.runpod.io/deploy?template=sfpbu5gqqw&ref=tt816r6b
 
-> ⚠️ This repo reuses key components from the original BindCraft repository (MIT License), including settings templates and backend logic.
-> Full credit and detailed documentation for BindCraft is available at:  
->  https://github.com/martinpacesa/BindCraft  
->  [Preprint](https://www.biorxiv.org/content/10.1101/2024.09.30.615802)
 
----
+This repository is not a fork of the original BindCraft repo, but a repackaged, cloud-optimized version that:
 
-## What This Project Does
+Runs in a RunPod container with a lightweight Docker image.
+PyRosetta and AF2 weights and PyRosetta are auto-installed after container mounting.
+Offers a Jupyter-based GUI for editing targets and launching jobs
+Supports user-provided design inputs via mounted volumes
 
-This repo provides:
-- A **Dockerfile** to install BindCraft with all core dependencies, excluding weights
-- A **Jupyter-based entrypoint** to design binders on RunPod (or other GPU cloud platforms)
-- Scripts to install AlphaFold2 weights and PyRosetta **after launch**, allowing reuse across sessions via mounted volumes
-- Volume-mount support for persistent configuration and output directories
 
----
+⚠️ This repo reuses key components from the original BindCraft repository (MIT License), including settings templates and backend logic. Full credit and detailed documentation for BindCraft is available at: https://github.com/martinpacesa/BindCraft Preprint
 
-## Quick Start on RunPod
 
-### 1. Clone this repository:
-```bash
-git clone https://github.com/YOUR_USERNAME/BindCraft-Cloud
-cd BindCraft-Cloud
+Quick Start on RunPod
+Clone the latest development repository:
 
-2. Build the Docker image:
-bash
-Copy
-Edit
-docker build -t bindcraft-cloud:latest .
-3. Launch container (with GPU and mounted workspace):
-bash
-Copy
-Edit
-docker run --gpus all -dit --name bindcraft_session \
-  -v /your/local/workspace:/workspace \
-  bindcraft-cloud:latest
-4. Open Jupyter:
-JupyterLab will be available on port 8888 with no password or token.
+git clone -b dev https://github.com/A-Yarrow/bindcraft-runpod.git
 
-Installing AlphaFold2 Weights and PyRosetta
-These are not included in the image (due to size and licensing), but you can install them inside the container using provided instructions in the notebook or script.
+cd bindcraft-runpod
 
-AlphaFold2 weights (~5.3 GB)
+Build and Push the Docker image:
 
-PyRosetta (requires a license for commercial use)
+docker build -t your-dockerhub-login-name/bindcraft-cloud:yourtag.
+docker push your-dockerhub-login-name/bindcraft-cloud:yourtag
+
+Choose an appropriate Cloud GPU. Alternatively, use my RunPod Template: https://console.runpod.io/deploy?template=sfpbu5gqqw&ref=tt816r6b
+	This Template has been tested and works with RunPods:
+A100 SXM, H100 SXM, L40, L40S
+
+Open Jupyter: JupyterLab will be available on port 8888. Use these detailed  instructions to launch your first job.
 
 Persistent Volume Layout
-Volume Path	Description
-/workspace/settings_target/	User-defined binder target configs (JSON)
-/workspace/settings_filters/	Design filter configs
-/workspace/settings_advanced/	Advanced model config
-/workspace/outputs/	Output designs and logs
-/workspace/params/	AlphaFold2 weights & PyRosetta install (optional)
+Volume Path
+Description
+/workspace/settings_target/
+User-defined binder target configs (JSON)
+/workspace/settings_filters/
+Design filter configs
+/workspace/settings_advanced/
+Advanced model config
+/workspace/outputs/
+Output designs and logs
+/workspace/params/
+AlphaFold2 weights & PyRosetta install 
 
-Jupyter Notebook
+
+Jupyter Notebook and GUI
 A starter notebook bindcraft-runpod-start.ipynb is provided to:
 
 Help users mount settings and parameter folders
-
 Launch designs using bindcraft.py
-
 View outputs and logs
-
 Upload custom target files
+GUI Workflow
+The notebook includes a user-friendly GUI to streamline the design process:
 
+Upload PDB or Create Target JSON:
+
+Upload a PDB file directly. The GUI will check for chain breaks and other inconsistencies.
+Alternatively, create a new target JSON file by filling in the required fields (design path, starting PDB, hotspot residues, binder lengths, and number of designs).
+
+Submit Job:
+
+Enter a unique job name.
+Select the target JSON file from the dropdown menu.
+Click "Submit Job" to start the design process.
+
+Monitor Progress:
+
+Logs are stored in a subdirectory within the outputs folder, labeled with the job name.
 What’s Inside This Repo
-bash
-Copy
-Edit
 bindcraft-cloud/
+
 ├── Dockerfile                   # Main build script
+
 ├── install_bindcraft.sh         # Custom install script for BindCraft with mamba/conda
+
 ├── start.sh                     # Launch script that copies settings and starts Jupyter
+
 ├── bindcraft-runpod-start.ipynb # Starter notebook for launching designs
+
 ├── bindcraft.py                 # Main binder design script (from upstream)
-├── functions/                   # ColabDesign utilities and backend logic
-│   └── colabdesign_utils.py
+
 ├── settings_target/             # Example target config
+
 ├── settings_filters/            # Default filter settings
+
 ├── settings_advanced/           # Default design settings
+
 └── README.md
-🧠 Why I Built This
+
+Why I Built This
 As a protein design engineer, I needed a reproducible and cloud-friendly setup to:
 
 Run high-throughput binder design without local GPU constraints
-
 Use RunPod or other cloud GPU services with persistent state
-
 Share a ready-to-use Docker image for others to reproduce my workflows
 
 This repo lets users skip complex local setup and run everything via a containerized workflow, while still preserving full flexibility of BindCraft’s powerful design stack.
 
-📜 Acknowledgments
+Acknowledgments
 This project reuses and repackages tools developed by:
+
 Martin Pacesa et al. — BindCraft
 Sergey Ovchinnikov — ColabDesign
 Justas Dauparas — ProteinMPNN
 RosettaCommons — PyRosetta
-BindCraft is licensed under the MIT License.
-ColabDesign and ProteinMPNN are licensed under Apache 2.0.
+
+BindCraft is licensed under the MIT License. ColabDesign and ProteinMPNN are licensed under Apache 2.0.
+
 Feel free to reach out via GitHub Issues if you encounter bugs or would like to contribute.
+
