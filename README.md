@@ -38,7 +38,7 @@ docker push your-dockerhub-login-name/bindcraft-cloud:yourtag
 
 Choose an appropriate Cloud GPU. Alternatively, use my RunPod Template: https://console.runpod.io/deploy?template=sfpbu5gqqw&ref=tt816r6b
 
-	This Template has been tested and works with RunPods: A100 SXM, H100 SXM, L40, L40S
+	This Template has been tested and works with RunPods: A100 SXM, H100 SXM, L40, L40S, RTX6000 ada
 
 Open Jupyter: JupyterLab will be available on port 8888. Use these detailed  instructions to launch your first job.
 
