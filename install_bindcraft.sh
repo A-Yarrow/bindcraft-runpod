@@ -36,12 +36,25 @@ echo "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 echo "Installing conda packages"
 $pkg_manager install \
   pip pandas matplotlib 'numpy<2.0.0' biopython scipy pdbfixer seaborn libgfortran5 tqdm \
-  jupyter=1.0 jupyterlab=3.6.3 ffmpeg pyrosetta fsspec py3dmol \
+  jupyter jupyterlab=4.4.7 ipywidgets=7.7.2 ffmpeg pyrosetta fsspec py3dmol \
   chex dm-haiku 'flax<0.10.0' dm-tree joblib ml-collections immutabledict optax \
   psutil copyparty \
-  ipywidgets=7.7.2 \
   -c conda-forge --channel https://conda.graylab.jhu.edu -y \
 || { echo "Error: Failed to install conda packages"; exit 1; }
+
+
+# ===============================
+# JupyterLab / ipywidgets fix
+# ===============================
+echo "[STEP] Fixing JupyterLab widget extensions..."
+
+# Clean any old builds
+jupyter lab clean
+
+# Rebuild lab to include ipywidgets JS
+jupyter lab build
+
+echo "[INFO] JupyterLab widget extensions rebuilt and notebook trusted"
 
 ############################################################################################################
 ################## Install pip requirements
